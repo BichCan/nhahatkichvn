@@ -5,6 +5,7 @@ import {Route, Routes} from "react-router-dom";
 import HomePage from "../pages/home/HomePage";
 import History from "../pages/about/History";
 import Artists from "../pages/artists/Artists";
+import ArtistDetail from "../pages/artists/ArtistDetail";
 import Booking from "../pages/booking/Booking";
 import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail"; // THÊM IMPORT
@@ -28,6 +29,7 @@ function MainLayout({ children }) {
     <Route path="/gioi-thieu/co-so-vat-chat" element={<Infrastructure />} />
     <Route path="/gioi-thieu/to-chuc" element={<OrganisationStructure />} />
     <Route path="/nghe-si" element={<Artists />} />
+    <Route path="/nghe-si/:artistId" element={<ArtistDetail />} />
     <Route path="/dat-ve" element={<Booking />} />
     <Route path="/dat-ve/:performanceId" element={<BookingPage />} /> 
     <Route path="/thanh-toan/:performanceId" element={<CheckoutPage />} />

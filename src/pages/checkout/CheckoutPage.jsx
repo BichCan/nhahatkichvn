@@ -3,7 +3,7 @@ import { useLocation, useParams, useNavigate } from 'react-router-dom';
 import performancesdata from '../../data/PerformancesData';
 import CardPay from './components/CardPay';
 import CardDrama from './components/CardDrama';
-
+import PopupCash from './components/PopupCash';
 // Danh sách phương thức thanh toán
 const paymentMethods = [
     {
@@ -23,6 +23,12 @@ const paymentMethods = [
         name: 'Thẻ Ngân hàng',
         description: 'Thanh toán qua thẻ ATM, Visa, Mastercard',
         icon: '🏦'
+    },
+    {
+        id:"cash",
+        description:"Thanh toán bằng tiền mặt",
+        name:"Tiền mặt",
+        icon:"💰"
     }
 ];
 
@@ -34,6 +40,7 @@ export default function CheckoutPage() {
     const { selectedSeats = [], selectedDate, selectedTime } = location.state || {};
 
     const [selectedPayment, setSelectedPayment] = useState('bank');
+    const [openPopup, setOpenPopup] = useState(false);
 
     // Tìm thông tin vở diễn
     const performance = performancesdata.find(p => p.id === parseInt(performanceId));
@@ -43,14 +50,24 @@ export default function CheckoutPage() {
 
     // Xử lý thanh toán
     const handlePayment = () => {
-        alert('Chức năng thanh toán đang được phát triển!');
+    setOpenPopup(true);
     };
+    const dataLocal = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("ticket")) : null;
 
     // Quay lại trang chọn ghế
     const handleGoBack = () => {
         navigate(`/dat-ve/${performanceId}`);
     };
-
+    const handleClosePopup= () =>{
+        localStorage.setItem("ticket",JSON.stringify({
+            performance,
+            selectedSeats,
+            selectedDate,
+            selectedTime,
+            total
+        }))
+        setOpenPopup(false)  
+    }
     if (!performance) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -157,6 +174,7 @@ export default function CheckoutPage() {
                     </button>
                 </div>
             </div>
+            {openPopup && <PopupCash onSubmit={handleClosePopup} />}
         </div>
     );
 }
