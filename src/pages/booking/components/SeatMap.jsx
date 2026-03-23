@@ -5,7 +5,7 @@ import SeatRow from './SeatRow';
 import SeatLegend from './SeatLegend';
 import SeatFooter from './SeatFooter';
 
-export default function SeatMap({ onSeatsChange, maxSeats = 10 }) {
+export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [occupiedSeats, setOccupiedSeats] = useState([]); 
 
@@ -36,12 +36,11 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10 }) {
     // Xử lý chọn/bỏ chọn ghế
     const handleSeatSelect = (row, number) => {
         const seatId = `${row}${number}`;
-        
         if (isSeatOccupied(row, number)) {
             alert('Ghế này đã có người đặt!');
             return;
         }
-
+        
         setSelectedSeats(prev => {
             let newSelected;
             if (prev.includes(seatId)) {
@@ -54,6 +53,26 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10 }) {
                 newSelected = [...prev, seatId];
             }
             
+            // Truyền thông tin chi tiết ghế lên BookingPage
+            const seatsInfo = newSelected.map(id => {
+                const r = id.charAt(0);
+                const num = parseInt(id.slice(1));
+                const isVip = ['C', 'D', 'E'].includes(r) || 
+                             seatsData.secondaryRows.default.includes(r) ||
+                             seatsData.secondaryRows.extended.includes(r);
+                const price = isVip 
+                    ? seatsData.seatTypes.blue.price 
+                    : seatsData.seatTypes.gray.price;
+                return {
+                    id,
+                    row: r,
+                    number: num,
+                    type: isVip ? 'vip' : 'regular',
+                    price
+                };
+            });
+            onSelectSeats(seatsInfo);
+
             if (onSeatsChange) {
                 onSeatsChange({
                     seats: newSelected,
@@ -97,8 +116,14 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10 }) {
                          seatsData.secondaryRows.extended.includes(row);
             const price = isVip 
                 ? seatsData.seatTypes.blue.price 
-                : seatsData.seatTypes.gray.price;
-            
+                : seatsData.seatTypes.gray.price;   
+            const seat = {
+                id: seatId,
+                row,
+                number,
+                type: isVip ? 'vip' : 'regular',
+                price
+            }
             return {
                 id: seatId,
                 row,
@@ -220,7 +245,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10 }) {
                     <h3 className="font-bold mb-2">Ghế đã chọn:</h3>
                     <div className="flex flex-wrap gap-2 mb-2">
                         {getSelectedSeatsInfo().map(seat => (
-                            <span key={seat.id} className="px-2 py-1 bg-theater-red text-white rounded-md text-sm">
+                            <span key={seat.id} className="px-2 py-1 bg-theater-red text-black rounded-md text-sm">
                                 {seat.id} - {seat.type === 'vip' ? 'VIP' : 'Thường'} - {seat.price.toLocaleString()}đ
                             </span>
                         ))}

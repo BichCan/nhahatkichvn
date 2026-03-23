@@ -59,31 +59,19 @@ export default function BookingPage() {
     // Format giờ
     const formatTime = (timeStr) => timeStr;
 
-    // Tính tổng tiền
+    // Tính tổng tiền từ danh sách ghế đã chọn (mỗi ghế có {id, row, number, type, price})
     const calculateTotal = () => {
-        return selectedSeats.reduce((total, seatId) => {
-            const row = seatId.charAt(0);
-            const isVipRow = ['C', 'D', 'E'].includes(row);
-            const price = isVipRow ? 250000 : 150000;
-            return total + price;
-        }, 0);
+        return selectedSeats.reduce((total, seat) => total + seat.price, 0);
     };
 
-    // Xử lý khi chọn ghế
-    const handleSeatSelect = (seat) => {
-        setSelectedSeats(prev => {
-            const exists = prev.find(s => s.id === seat.id);
-            if (exists) {
-                return prev.filter(s => s.id !== seat.id);
-            } else {
-                return [...prev, seat];
-            }
-        });
+    // Xử lý khi chọn ghế - nhận danh sách thông tin chi tiết ghế từ SeatMap
+    const handleSeatSelect = (seatsInfo) => {
+        setSelectedSeats(seatsInfo);
     };
 
     return (
         <div className="bg-theater-bg font-sans pb-24 text-slate-800">
-            <HeroPoster 
+            <HeroPoster
                 image={performance.src}
                 title={performance.name}
             />
@@ -109,7 +97,7 @@ export default function BookingPage() {
                     <SeatMap 
                         className=" absolute w-full h-auto"
                         selectedSeats={selectedSeats}
-                        onSeatSelect={handleSeatSelect}
+                        onSelectSeats={handleSeatSelect}
                     />
                 </div>
             </section>
@@ -117,6 +105,9 @@ export default function BookingPage() {
             <BookingFooter 
                 selectedSeats={selectedSeats}
                 total={calculateTotal()}
+                performanceId={performanceId}
+                selectedDate={selectedDate}
+                selectedTime={selectedTime}
             />
         </div>
     );

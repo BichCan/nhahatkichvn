@@ -1,6 +1,23 @@
 import React from 'react';
+import { useNavigate } from 'react-router-dom';
 
-export default function BookingFooter({ selectedSeats, total }) {
+export default function BookingFooter({ selectedSeats, total, performanceId, selectedDate, selectedTime }) {
+    const navigate = useNavigate();
+
+    const handleContinue = () => {
+      if(selectedDate&&selectedSeats&&selectedTime){
+        navigate(`/thanh-toan/${performanceId}`, {
+            state: {
+                selectedSeats,
+                selectedDate,
+                selectedTime
+            }
+        });
+      }else{
+        alert('Vui lòng chọn đủ thông tin về: Ngày, Giờ và Ghế');
+      } 
+    };
+
     return (
         <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 pb-8 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50">
             <div className="flex flex-col">
@@ -13,11 +30,12 @@ export default function BookingFooter({ selectedSeats, total }) {
             </div>
             <button 
                 className={`px-10 py-3 rounded-full font-bold shadow-lg transition-transform active:scale-95 ${
-                    selectedSeats.length > 0
-                        ? 'bg-theater-red text-white shadow-red-200'
+                    selectedSeats.length > 0 && selectedDate !== null && selectedTime !== null
+                        ? 'bg-theater-red text-black shadow-red-200'
                         : 'bg-gray-300 text-gray-500 cursor-not-allowed'
                 }`}
-                disabled={selectedSeats.length === 0}
+                disabled={selectedSeats.length === 0 && selectedDate === null && selectedTime === null}
+                onClick={handleContinue}
             >
                 Tiếp tục
             </button>

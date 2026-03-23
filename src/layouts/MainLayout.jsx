@@ -14,6 +14,7 @@ import Task from "../pages/about/Task";
 import Infrastructure from "../pages/about/Infrastructure";
 import OrganisationStructure from "../pages/about/OrganisationStructure";
 import BookingPage from "../pages/booking/BookingPage"; // THÊM IMPORT
+import CheckoutPage from "../pages/checkout/CheckoutPage"; // THÊM IMPORT
 function MainLayout({ children }) {
   return (
   <>
@@ -29,6 +30,7 @@ function MainLayout({ children }) {
     <Route path="/nghe-si" element={<Artists />} />
     <Route path="/dat-ve" element={<Booking />} />
     <Route path="/dat-ve/:performanceId" element={<BookingPage />} /> 
+    <Route path="/thanh-toan/:performanceId" element={<CheckoutPage />} />
     <Route path="/tin-tuc" element={<News />} />
     <Route path="/tin-tuc/:slug" element={<NewsDetail />} /> 
     <Route path="/vo-dien" element={<Performances />} />
