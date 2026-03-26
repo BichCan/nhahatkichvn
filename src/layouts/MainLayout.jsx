@@ -10,6 +10,7 @@ import Booking from "../pages/booking/Booking";
 import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail"; // THÊM IMPORT
 import Performances from "../pages/performances/Performances";
+import TicketInfo from "../pages/booking/TicketInfo"; // <-- mới
 import Feedback from "../pages/feedback/Feedback";
 import Task from "../pages/about/Task";
 import Infrastructure from "../pages/about/Infrastructure";
@@ -36,6 +37,7 @@ function MainLayout({ children }) {
     <Route path="/tin-tuc" element={<News />} />
     <Route path="/tin-tuc/:slug" element={<NewsDetail />} /> 
     <Route path="/vo-dien" element={<Performances />} />
+    <Route path="/thong-tin-dat-ve" element={<TicketInfo />} />
     <Route path="/gop-y" element={<Feedback />} />
    </Routes>
   </main>
