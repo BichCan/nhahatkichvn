@@ -4,14 +4,14 @@ export default function NewsBox({ news }) {
     if (!news) return null;
     
     return (
-        <Link to={`/tin-tuc/${news.slug}`} className="block group">
+        <Link to={`/tin-tuc/${news.id}`} className="block group">
             <article className="bg-white rounded-xl overflow-hidden shadow-[0_4px_20px_rgba(0,0,0,0.08)] flex flex-col h-full hover:shadow-xl transition-shadow duration-300">
                 {/* Hero Image Section */}
                 <div className="relative w-full h-48 overflow-hidden flex-shrink-0">
                     <img 
                         alt={news.title} 
                         className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300" 
-                        src={news.image}
+                        src={news.src}
                         onError={(e) => {
                             e.target.src = 'https://via.placeholder.com/400x300?text=No+Image';
                         }}

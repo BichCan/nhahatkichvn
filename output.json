@@ -1,0 +1,252 @@
+{
+  "users": {
+    "columns": [
+      "id",
+      "full_name",
+      "email",
+      "password",
+      "phone",
+      "role",
+      "created_at",
+      "updated_at"
+    ],
+    "sample": [
+      1,
+      "bicadmin",
+      "admin@hatkich.vn",
+      "admin",
+      "0901234567",
+      "admin",
+      "2026-04-01 17:39:27",
+      "2026-04-01 17:39:27"
+    ]
+  },
+  "sqlite_sequence": {
+    "columns": [
+      "name",
+      "seq"
+    ],
+    "sample": [
+      "users",
+      10
+    ]
+  },
+  "news": {
+    "columns": [
+      "id",
+      "title",
+      "content",
+      "image_url",
+      "admin_id",
+      "is_published",
+      "created_at"
+    ],
+    "sample": [
+      1,
+      "NSƯT TRỊNH MAI NGUYÊN ĐƯỢC BỔ NHIỆM LÀM PHÓ GIÁM ĐỐC NHÀ HÁT KỊCH VIỆT NAM",
+      "Sáng ngày 21/01/2026, tại trụ sở Bộ Văn hóa, Thể thao và Du lịch, NSƯT Trịnh Mai Nguyên - Trưởng đoàn kịch Đương đại chính thức được bổ nhiệm giữ chức vụ Phó Giám đốc Nhà hát Kịch Việt Nam, đánh dấu cột mốc quan trọng trong chặng đường cống hiến bền bỉ của anh đối với nghệ thuật sân khấu kịch nói nước nhà.\r\n\r\n🎭 Dấu ấn nghệ thuật\r\nLà một nghệ sĩ trưởng thành từ thực tiễn sân khấu, bên cạnh vai diễn để lại nhiều dấu ấn đặc biệt – Đại tướng Võ Nguyên Giáp, NSƯT Trịnh Mai Nguyên còn khẳng định tài năng qua hàng loạt vở diễn được khán giả và giới chuyên môn ghi nhận như: Nghêu Sò Ốc Hến, Lâu đài cát, Hồn Trương Ba da hàng thịt, Thế sự… Không chỉ tỏa sáng trên sân khấu với vai trò diễn viên, anh còn thể hiện dấu ấn sáng tạo trong vai trò đạo diễn qua các tác phẩm: Người trong cõi nhớ, Như thế là tội ác…, cho thấy tư duy nghệ thuật nghiêm túc, đa chiều và sự bền bỉ trong hành trình cống hiến cho sân khấu kịch nói.\r\n\r\n✨ Ghi nhận và kỳ vọng\r\nViệc bổ nhiệm NSƯT Trịnh Mai Nguyên giữ cương vị Phó Giám đốc Nhà hát Kịch Việt Nam thể hiện sự ghi nhận của lãnh đạo Bộ Văn hóa, Thể thao và Du lịch cũng như của Nhà hát đối với những đóng góp lâu dài của anh cho đơn vị. Đồng thời, đây cũng là sự kỳ vọng vào một thế hệ lãnh đạo nghệ sĩ vừa vững chuyên môn, vừa thấu hiểu đời sống sáng tạo của sân khấu.\r\n\r\n💥 Sứ mệnh mới\r\nTrên cương vị mới, NSƯT Trịnh Mai Nguyên được kỳ vọng sẽ tiếp tục cùng Ban Giám đốc Nhà hát Kịch Việt Nam phát huy truyền thống của đơn vị kịch nói hàng đầu, đồng thời góp phần đổi mới tư duy nghệ thuật, nâng cao chất lượng vở diễn, đưa sân khấu kịch đến gần hơn với công chúng, đặc biệt là khán giả trẻ.\r\n\r\n💐 Lời kết\r\nSự kiện này không chỉ là niềm vui riêng của cá nhân NSƯT Trịnh Mai Nguyên mà còn là niềm phấn khởi chung của tập thể Nhà hát Kịch Việt Nam – nơi đang từng bước khẳng định vị thế là một trong những đơn vị nghệ thuật hàng đầu của cả nước.",
+      "/News/lecongbo.jpg",
+      1,
+      1,
+      "2026-01-21 08:00:00"
+    ]
+  },
+  "performances": {
+    "columns": [
+      "id",
+      "title",
+      "description",
+      "duration",
+      "type",
+      "poster_url",
+      "status",
+      "created_at",
+      "updated_at",
+      "rating_avg",
+      "rating_count"
+    ],
+    "sample": [
+      1,
+      "Ngược chiều bình an",
+      "Lấy cảm hứng từ câu chuyện có thật về sự hy sinh của ba người lính cứu hỏa trong khi làm nhiệm vụ, vở kịch \"Ngược chiều bình an\" không chỉ tái hiện một cách chân thực những thử thách khốc liệt của nghề cứu hỏa mà còn khắc họa sâu sắc đời sống nội tâm của những con người luôn đối mặt với ranh giới mong manh giữa sự sống và cái chết.\r\n\r\nÊ-kíp sáng tạo:\r\n- Tác giả: Thiên Ân\r\n- Đạo diễn: NSƯT Kiều Minh Hiếu\r\n- Trợ lý đạo diễn: NS Thế Nguyên\r\n- Âm nhạc: An Hiếu\r\n- Biên đạo: NS Hà Hằng\r\n- Phục trang: NSƯT Minh Hùng\r\n\r\nDàn diễn viên chính:\r\n- NSƯT Trịnh Mai Nguyên - Đại úy cứu hỏa\r\n- NSƯT Dũng Nam - Chiến sĩ cứu hỏa\r\n- NSƯT Khuất Quỳnh Hoa - Vợ của lính cứu hỏa\r\n- Hồ Liên - Mẹ của lính cứu hỏa\r\n\r\nDàn diễn viên phụ: Hồng Phúc, Việt Hoa, Tô Dũng, Minh Hải, Thu Hà, Văn Thành",
+      120,
+      "Chính kịch",
+      "/Performances/NguocChieuBinhAn.jpg",
+      "active",
+      "2026-04-01 18:02:52",
+      "2026-04-01 18:02:52",
+      0,
+      0
+    ]
+  },
+  "artists": {
+    "columns": [
+      "id",
+      "name",
+      "bio",
+      "avatar_url",
+      "role_type",
+      "created_at"
+    ],
+    "sample": [
+      1,
+      "NSƯT Kiều Minh Hiếu",
+      "NSƯT Kiều Minh Hiếu sinh năm 1975, hiện đang sinh sống và làm việc tại Hà Nội. Ông đã có khoảng 25 năm gắn bó với mái nhà chung mang tên Nhà hát Kịch Việt Nam.\r\n\r\nChức vụ:\r\n- Phó Giám đốc Nhà hát Kịch Việt Nam (2020 - nay)\r\n- Trưởng đoàn Kịch Cổ điển (trước 2020)\r\n\r\nDanh hiệu:\r\n- Nghệ sĩ Ưu tú (2019)\r\n\r\nCác vở diễn đã tham gia:\r\nKiều, Lâu đài cát, Người thi hành án tử, Chuyện chàng dũng sĩ, Hamlet, Trong mưa dông thấy nắng, Thế sự, Điều còn lại (vai trò đạo diễn)\r\n\r\nPhim đã tham gia:\r\nKhi đàn chim trở về (phần 1 và 2), Nếp nhà, Định mệnh, Vòng nguyệt quế, Chàng trai đa cảm\r\n\r\nThành tích:\r\n- Huy chương Vàng tại Liên hoan Nghệ thuật sân khấu Hình tượng người chiến sĩ Công an nhân dân lần thứ 3 (2015) với vở \"Trong mưa dông thấy nắng\"\r\n- Huy chương Vàng tại Liên hoan Sân khấu Kịch nói toàn quốc (2021) với vở kịch \"Điều còn lại\" (vai trò đạo diễn)\r\n\r\n\"Tôi luôn tận tâm hết sức để làm được những điều tốt nhất cho Nhà hát, chứ không phải làm để được lợi cho bản thân.\"",
+      "/Artists/kieuminhhieu.jpg",
+      "actor",
+      "2026-04-01 18:10:19"
+    ]
+  },
+  "performance_artists": {
+    "columns": [
+      "id",
+      "performance_id",
+      "artist_id",
+      "character_name"
+    ],
+    "sample": [
+      1,
+      1,
+      1,
+      "Đạo diễn"
+    ]
+  },
+  "plays": {
+    "columns": [
+      "id",
+      "performance_id",
+      "start_time",
+      "end_time",
+      "status",
+      "created_at",
+      "updated_at"
+    ],
+    "sample": [
+      1,
+      7,
+      "2026-01-15 20:00:00",
+      "2026-01-15 22:00:00",
+      "cancelled",
+      "2026-04-01 18:14:47",
+      "2026-04-01 18:14:47"
+    ]
+  },
+  "seat_types": {
+    "columns": [
+      "id",
+      "name",
+      "price",
+      "description",
+      "created_at"
+    ],
+    "sample": [
+      1,
+      "Ghế thường",
+      350000,
+      "Ghế tiêu chuẩn, tầm nhìn tốt",
+      "2026-04-02 01:29:29"
+    ]
+  },
+  "tickets": {
+    "columns": [
+      "id",
+      "play_id",
+      "seat_id",
+      "price",
+      "status",
+      "hold_expired_at",
+      "held_by_user_id",
+      "order_id",
+      "created_at",
+      "updated_at"
+    ],
+    "sample": [
+      1,
+      7,
+      1,
+      540000,
+      "paid",
+      null,
+      null,
+      null,
+      "2026-04-02 01:51:24",
+      "2026-04-02 01:51:24"
+    ]
+  },
+  "orders": {
+    "columns": [
+      "order_id",
+      "user_id",
+      "total_amount",
+      "payment_status",
+      "payment_method",
+      "payment_date",
+      "admin_confirmed_by",
+      "expired_at",
+      "note",
+      "created_at",
+      "updated_at"
+    ],
+    "sample": [
+      "ORD-20260110-001",
+      2,
+      1080000,
+      "paid",
+      "cash",
+      "2026-01-10 14:30:00",
+      1,
+      "2026-01-15 20:00:00",
+      "Đã thanh toán 2 ghế VIP",
+      "2026-01-10 14:30:00",
+      "2026-04-02 01:53:36"
+    ]
+  },
+  "order_details": {
+    "columns": [
+      "id",
+      "order_id",
+      "ticket_id",
+      "price"
+    ],
+    "sample": [
+      62,
+      "ORD-20260110-001",
+      1,
+      500000
+    ]
+  },
+  "ratings": {
+    "columns": [
+      "id",
+      "user_id",
+      "performance_id",
+      "rating",
+      "review"
+    ],
+    "sample": [
+      1,
+      2,
+      3,
+      5,
+      "Quan thanh tra - Kiệt tác của Gogol, bản dựng Việt Nam rất thành công, diễn xuất xuất sắc!"
+    ]
+  },
+  "seats": {
+    "columns": [
+      "id",
+      "seat_row",
+      "seat_number",
+      "seat_type_id",
+      "is_active",
+      "created_at"
+    ],
+    "sample": [
+      1,
+      "A",
+      15,
+      1,
+      1,
+      "2026-04-02 01:30:51"
+    ]
+  }
+}

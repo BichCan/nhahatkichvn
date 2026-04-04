@@ -1,6 +1,5 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams } from 'react-router-dom';
-import newsData from '../../data/NewsData';
 import ArticleHeader from './components/ArticleHeader';
 import ArticleImage from './components/ArticleImage';
 import ArticleContent from './components/ArticleContent';
@@ -9,10 +8,30 @@ import TableOfContents from './components/TableOfContents';
 import RelatedPosts from './components/RelatedPosts';
 
 export default function NewsDetail() {
-    const { slug } = useParams();
-    const news = newsData.find(item => item.slug === slug);
-    
+    const { id } = useParams();
+    const [news, setNews] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:5000/api/news')
+            .then(res => res.json())
+            .then(data => {
+                const found = data.find(item => item.id === parseInt(id));
+                setNews(found);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching news:", err);
+                setLoading(false);
+            });
+    }, [id]);
+
+    if (loading) return <div>Đang tải...</div>;
     if (!news) return <div>Không tìm thấy bài viết</div>;
+
+    // Use default values for rendering since backend only passed src and content
+    news.image = news.src;
+
     
     return (
         <main className="container mx-auto px-4 md:px-10 lg:px-20 py-8">

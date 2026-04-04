@@ -1,4 +1,4 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import seatsData from '../../../data/SeatsData';
 import Stage from './Stage';
 import SeatRow from './SeatRow';
@@ -8,6 +8,14 @@ import SeatFooter from './SeatFooter';
 export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [occupiedSeats, setOccupiedSeats] = useState([]); 
+    const [dbSeats, setDbSeats] = useState([]);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:5000/api/seats')
+            .then(res => res.json())
+            .then(data => setDbSeats(data))
+            .catch(err => console.error("Error fetching seats:", err));
+    }, []);
 
     // Tính tổng tiền
     const calculateTotal = () => {
@@ -30,6 +38,8 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats })
     // Kiểm tra ghế đã được đặt chưa
     const isSeatOccupied = (row, number) => {
         const seatId = `${row}${number}`;
+        const seatInDb = dbSeats.find(s => s.row === row && s.number === number);
+        if (seatInDb && seatInDb.status === "unavailable") return true;
         return occupiedSeats.includes(seatId);
     };
 

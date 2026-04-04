@@ -2,9 +2,6 @@ import { useState, useEffect, useRef, useLayoutEffect } from "react";
 import { createPortal } from "react-dom";
 import { FaSearch } from "react-icons/fa";
 import { useNavigate } from "react-router-dom";
-import performancesdata from "../../data/PerformancesData";
-import artistsData from "../../data/ArtistsData";
-import newsData from "../../data/NewsData";
 
 export default function SearchBar() {
     const [q, setQ] = useState("");
@@ -13,6 +10,22 @@ export default function SearchBar() {
     const [portalStyle, setPortalStyle] = useState(null);
     const navigate = useNavigate();
     const inputRef = useRef(null);
+
+    const [performancesdata, setPerformancesData] = useState([]);
+    const [artistsData, setArtistsData] = useState([]);
+    const [newsData, setNewsData] = useState([]);
+
+    useEffect(() => {
+        Promise.all([
+            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/artists').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/news').then(r => r.json()),
+        ]).then(([perfData, artData, nwData]) => {
+            setPerformancesData(perfData);
+            setArtistsData(artData);
+            setNewsData(nwData);
+        }).catch(err => console.error("Error fetching data:", err));
+    }, []);
 
     // immediate search on every change (no debounce)
     useEffect(() => {
@@ -37,7 +50,7 @@ export default function SearchBar() {
 
         setResults({ performances, artists, news });
         setOpen(true);
-    }, [q]);
+    }, [q, performancesdata, artistsData, newsData]);
 
     // compute portal position so dropdown appears right under the input and above everything
     const updatePortalPosition = () => {
@@ -97,7 +110,7 @@ export default function SearchBar() {
     const onSelectNews = (n) => {
         setOpen(false);
         setQ("");
-        navigate(`/tin-tuc/${n.slug}`);
+        navigate(`/tin-tuc/${n.id}`);
     };
 
     const dropdown = (

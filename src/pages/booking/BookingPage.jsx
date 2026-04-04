@@ -1,8 +1,5 @@
-// pages/booking/BookingPage.jsx
-import React, { useState } from 'react';
-import { useParams } from 'react-router-dom'; // Thêm hook useParams
-import performancesdata from '../../data/PerformancesData';
-import playsdata from '../../data/PlaysData';
+import React, { useState, useEffect } from 'react';
+import { useParams } from 'react-router-dom';
 import HeroPoster from './components/HeroPoster';
 import MovieInfo from './components/MovieInfo';
 import ScheduleSelector from './components/ScheduleSelector';
@@ -15,12 +12,36 @@ export default function BookingPage() {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [selectedDate, setSelectedDate] = useState(null);
     const [selectedTime, setSelectedTime] = useState(null);
+    const [performance, setPerformance] = useState(null);
+    const [playSchedules, setPlaySchedules] = useState([]);
+    const [loading, setLoading] = useState(true);
 
-    // Tìm vở diễn theo ID
-    const performance = performancesdata.find(p => p.id === parseInt(performanceId));
-    
-    // Lấy danh sách suất diễn của vở này
-    const playSchedules = playsdata.filter(s => s.p_id === parseInt(performanceId));
+    useEffect(() => {
+        Promise.all([
+            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/plays').then(r => r.json())
+        ])
+        .then(([perfData, playsData]) => {
+            const perf = perfData.find(p => p.id === parseInt(performanceId));
+            setPerformance(perf);
+            setPlaySchedules(playsData.filter(s => s.p_id === parseInt(performanceId)));
+            setLoading(false);
+        })
+        .catch(err => {
+            console.error(err);
+            setLoading(false);
+        });
+    }, [performanceId]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-700">Đang tải thông tin...</h2>
+                </div>
+            </div>
+        );
+    }
 
     // Nếu không tìm thấy vở diễn
     if (!performance) {

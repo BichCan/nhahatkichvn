@@ -1,8 +1,7 @@
 import React, { useState, useEffect } from 'react';
-import { Link } from 'react-router-dom'; // Thêm import Link
-import playsData from "../../../data/PlaysData";
-
-export default function PerformanceCard({ performance }) {
+import { Link } from 'react-router-dom';
+import { LuTicket } from "react-icons/lu";
+export default function PerformanceCard({ performance, playSchedules = [] }) {
     // STATE - Theo dõi kích thước màn hình
     const [windowWidth, setWindowWidth] = useState(window.innerWidth);
 
@@ -18,57 +17,67 @@ export default function PerformanceCard({ performance }) {
     if (!performance) return null;
 
     // Lọc suất diễn theo ID vở diễn
-    const playSchedules = playsData.filter(s => s.p_id === performance.id);
+    const currentPlaySchedules = playSchedules.filter(s => s.p_id === performance.id);
 
     // Xử lý ngày tháng
     const today = new Date();
     today.setHours(0, 0, 0, 0);
 
     // Lọc suất sắp chiếu
-    const upcomingSchedules = playSchedules.filter(s => {
+    const upcomingSchedules = currentPlaySchedules.filter(s => {
         const scheduleDate = new Date(s.date);
         scheduleDate.setHours(0, 0, 0, 0);
         return scheduleDate > today && (s.status === "còn chỗ" || s.status === "hết chỗ");
     });
 
     // Lọc suất chiếu hôm nay
-    const todaySchedules = playSchedules.filter(s => {
+    const todaySchedules = currentPlaySchedules.filter(s => {
         const scheduleDate = new Date(s.date);
         scheduleDate.setHours(0, 0, 0, 0);
         return scheduleDate.getTime() === today.getTime();
     });
 
     // Đếm số lượng theo trạng thái
-    const availableCount = playSchedules.filter(s => s.status === "còn chỗ").length;
-    const soldOutCount = playSchedules.filter(s => s.status === "hết chỗ").length;
-    const closedCount = playSchedules.filter(s => s.status === "đã đóng").length;
+    const availableCount = currentPlaySchedules.filter(s => s.status === "còn chỗ").length;
+    const soldOutCount = currentPlaySchedules.filter(s => s.status === "hết chỗ").length;
+    const closedCount = currentPlaySchedules.filter(s => s.status === "đã đóng").length;
 
     // Xác định trạng thái vở diễn
+    // Nếu không có suất nào trong DB, dùng performance.status từ backend
     const getStatus = () => {
         if (todaySchedules.length > 0) return "Đang diễn";
         if (upcomingSchedules.length > 0) return "Sắp diễn";
+        // fallback: nếu performance đang active trong DB thì vẫn coi là Sắp diễn
+        if (performance.status === 'active') return "Sắp diễn";
         return "Đã diễn";
     };
+
+    // Cho phép đặt vé nếu: có suất active trong DB, HOẶC performance đang active
+    const canBook = (
+        (getStatus() === "Đang diễn" || getStatus() === "Sắp diễn") &&
+        (availableCount > 0 || performance.status === 'active')
+    );
+
 
     // Lấy suất diễn đầu tiên để hiển thị (nếu có)
     const firstUpcoming = upcomingSchedules.length > 0 ? upcomingSchedules[0] : null;
     const firstToday = todaySchedules.length > 0 ? todaySchedules[0] : null;
 
-    // Format ngày giờ hiển thị
-    const formatShowDateTime = () => {
-        if (firstToday) {
-            const date = new Date(firstToday.date);
-            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${firstToday.time}`;
+    // Hiển thị rating sao
+    const rating = performance.rating || 0;
+    const ratingCount = performance.ratingCount || 0;
+    const renderStars = (score) => {
+        const stars = [];
+        const full = Math.floor(score);
+        const hasHalf = score - full >= 0.5;
+        for (let i = 1; i <= 5; i++) {
+            if (i <= full) stars.push(<span key={i} className="text-yellow-400 text-xs">★</span>);
+            else if (i === full + 1 && hasHalf) stars.push(<span key={i} className="text-yellow-300 text-xs">⯨</span>);
+            else stars.push(<span key={i} className="text-gray-300 text-xs">★</span>);
         }
-        if (firstUpcoming) {
-            const date = new Date(firstUpcoming.date);
-            return `${date.getDate()}/${date.getMonth() + 1}/${date.getFullYear()} ${firstUpcoming.time}`;
-        }
-        return null;
+        return stars;
     };
 
-    // Kiểm tra xem có thể đặt vé không
-    const canBook = getStatus() !== 'Đã diễn' && availableCount > 0;
 
     return (
         <div className="bg-white rounded-xl shadow-sm border border-gray-200 overflow-hidden h-full flex flex-col">
@@ -199,6 +208,21 @@ export default function PerformanceCard({ performance }) {
                 </div>
             )}
 
+            {/* Ratings Section - dưới phần suất diễn */}
+            <div className="px-4 py-2 border-t border-gray-100">
+                <div className="flex items-center justify-between">
+                    <div className="flex items-center gap-1">
+                        {renderStars(rating)}
+                        <span className="text-xs font-bold text-gray-700 ml-1">
+                            {rating > 0 ? rating : 'Chưa có'}
+                        </span>
+                    </div>
+                    {ratingCount > 0 && (
+                        <span className="text-[10px] text-gray-400">{ratingCount.toLocaleString()} đánh giá</span>
+                    )}
+                </div>
+            </div>
+
             {/* Action Button Section */}
             <div className="mt-auto p-3 bg-gray-50 border-t border-gray-100">
                 {canBook ? (
@@ -206,7 +230,7 @@ export default function PerformanceCard({ performance }) {
                         to={`/dat-ve/${performance.id}`}
                         className="w-full font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm bg-orange-500 hover:bg-orange-600 text-white"
                     >
-                        <span className="material-symbols-outlined text-base">confirmation_number</span>
+                        <span className="material-symbols-outlined text-base"><LuTicket /></span>
                         <span>Đặt vé ngay</span>
                     </Link>
                 ) : (
@@ -214,7 +238,7 @@ export default function PerformanceCard({ performance }) {
                         className="w-full font-bold py-2.5 px-4 rounded-xl flex items-center justify-center gap-2 transition-colors text-sm bg-gray-200 text-gray-500 cursor-not-allowed"
                         disabled
                     >
-                        <span className="material-symbols-outlined text-base">confirmation_number</span>
+                        <span className="material-symbols-outlined text-base"><LuTicket /></span>
                         <span>
                             {getStatus() === 'Đã diễn' ? 'Đã kết thúc' : 'Hết vé'}
                         </span>

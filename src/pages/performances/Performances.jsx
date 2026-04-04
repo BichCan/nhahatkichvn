@@ -1,7 +1,5 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useNavigate } from 'react-router-dom';
-import performancesdata from '../../data/PerformancesData';
-import playsData from '../../data/PlaysData';
 import PerformanceCard from './PerformanceCard';
 import PerformancePopup from '../performances/performancepopup/PerformancePopup'; // Import popup
 
@@ -15,42 +13,58 @@ export default function Performances() {
         past: []
     });
     const [selectedPerformance, setSelectedPerformance] = useState(null); // State cho popup
+    const [performancesdata, setPerformancesData] = useState([]);
+    const [allPlaySchedules, setAllPlaySchedules] = useState([]);
 
     useEffect(() => {
-        // Phân loại vở diễn
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        const ongoing = [];
-        const upcoming = [];
-        const past = [];
-        performancesdata.forEach(performance => {
-            const playSchedules = playsData.filter(s => s.p_id === performance.id);
-            const todaySchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate.getTime() === today.getTime();
-            });
-            const upcomingSchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate > today;
-            });
-            const pastSchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate < today;
-            });
-            if (todaySchedules.length > 0) {
-                ongoing.push(performance);
-            } else if (upcomingSchedules.length > 0) {
-                upcoming.push(performance);
-            } else if (pastSchedules.length > 0) {
-                past.push(performance);
-            } else {
-                upcoming.push(performance);
-            }
-        });
-        setClassifiedPlays({ ongoing, upcoming, past });
+        Promise.all([
+            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/plays').then(r => r.json())
+        ])
+        .then(([perfData, playSchedulesList]) => {
+            setPerformancesData(perfData);
+            setAllPlaySchedules(playSchedulesList);
+            
+            // Phân loại vở diễn
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const ongoing = [];
+            const upcoming = [];
+            const past = [];
+            perfData.forEach(performance => {
+                const playSchedules = playSchedulesList.filter(s => s.p_id === performance.id);
+                    const todaySchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate.getTime() === today.getTime()
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    const upcomingSchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate > today
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    const pastSchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate < today;
+                    });
+                    if (todaySchedules.length > 0) {
+                        ongoing.push(performance);
+                    } else if (upcomingSchedules.length > 0) {
+                        upcoming.push(performance);
+                    } else if (pastSchedules.length > 0 && performance.status !== 'active') {
+                        past.push(performance);
+                    } else {
+                        // Nếu performance.status là 'active', vẫn xếp vào sắp diễn
+                        upcoming.push(performance);
+                    }
+                });
+
+                setClassifiedPlays({ ongoing, upcoming, past });
+            })
+            .catch(err => console.error("Error fetching performances:", err));
     }, []);
 
     // Mở popup khi có openPerformanceId từ location.state (ví dụ từ SearchBar)
@@ -142,6 +156,7 @@ export default function Performances() {
                             >
                                 <PerformanceCard 
                                     performance={performance} 
+                                    playSchedules={allPlaySchedules}
                                 />
                             </div>
                         ))}
