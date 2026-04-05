@@ -1,4 +1,6 @@
 import React from "react";
+import performancesdata from "../../data/PerformancesData";
+
 
 export default function Ticket({ ticket = {}, onDelete }) {
   const {
@@ -22,6 +24,10 @@ export default function Ticket({ ticket = {}, onDelete }) {
   // Mã vé cố định (lưu sẵn từ khi tạo)
   const code = orderCode || `NTK-${performance?.id || "00"}-${String(createdAt || Date.now()).slice(-6)}`;
 
+  // Get poster from mock data
+  const mockPerformance = performancesdata.find(p => p.id === performance?.id);
+  const posterImgSrc = mockPerformance?.src || performance?.src || performance?.image || performance?.posterUrl || "/placeholder-poster.jpg";
+
   // Format ngày
   const formatDate = (d) => {
     if (!d) return "—";
@@ -35,12 +41,7 @@ export default function Ticket({ ticket = {}, onDelete }) {
       {/* Ảnh poster */}
       <div className="md:w-[220px] flex-shrink-0 bg-black flex items-stretch">
         <img
-          src={
-            performance?.src ||
-            performance?.image ||
-            performance?.posterUrl ||
-            "/placeholder-poster.jpg"
-          }
+          src={posterImgSrc}
           alt={performance?.name}
           className="object-cover w-full h-52 md:h-full"
         />

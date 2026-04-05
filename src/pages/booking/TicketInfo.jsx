@@ -9,7 +9,7 @@ export default function TicketInfo() {
   useEffect(() => {
     const fetchBookings = async () => {
       try {
-        const response = await fetch('http://127.0.0.1:5000/api/bookings', { credentials: 'include' });
+        const response = await fetch('http://127.0.0.1:5000/api/tickets', { credentials: 'include' });
         if (response.status === 401) {
           navigate('/login', { state: { message: "Vui lòng đăng nhập để xem lịch sử đặt vé" } });
           return;
@@ -31,12 +31,26 @@ export default function TicketInfo() {
     alert("Chức năng hủy vé đang được bảo trì. Vui lòng liên hệ quầy vé.");
   };
 
-  const handleDeleteAll = () => {
+  const handleDeleteAll = async () => {
     if (window.confirm("Bạn có chắc chắn muốn xóa tất cả vé?")) {
-      localStorage.removeItem("tickets");
-      localStorage.removeItem("ticket");
-      setTickets([]);
-      navigate("/");
+      try {
+        const response = await fetch('http://127.0.0.1:5000/api/tickets', {
+          method: 'DELETE',
+          credentials: 'include'
+        });
+        const result = await response.json();
+        if (result.success) {
+          localStorage.removeItem("tickets");
+          localStorage.removeItem("ticket");
+          setTickets([]);
+          navigate("/");
+        } else {
+          alert(result.message || "Xóa vé thất bại");
+        }
+      } catch (err) {
+        console.error("Delete all error:", err);
+        alert("Không thể kết nối đến máy chủ");
+      }
     }
   };
 
