@@ -89,54 +89,54 @@ export default function UserMenu() {
         <div className="relative">
             <button 
                 onClick={() => setOpen(!open)} 
-                className="p-2 rounded-full hover:bg-gray-700 transition-colors flex items-center gap-2"
+                className="p-2 rounded-full hover:bg-[#800020]/10 transition-colors flex items-center gap-2"
                 title={user ? `Xin chào, ${user.full_name}` : "Tài khoản"}
             >
-                <FaUser className={user ? "text-yellow-400" : "text-white"} />
+                <FaUser className={user ? "text-[#800020]" : "text-[#4a0012]"} />
             </button>
             
             {open && (
-                <div className="absolute overflow-hidden right-0 mt-2 w-60 bg-[#1a1a1a] text-white rounded-md shadow-[0_20px_50px_rgba(0,0,0,0.5)] z-50 border border-gray-800">
+                <div className="absolute overflow-hidden right-0 mt-2 w-60 bg-white text-[#4a0012] rounded-lg shadow-[0_20px_50px_rgba(0,0,0,0.15)] z-50 border border-[#D4BAB6]">
                     {!user ? (
                         <>
-                            <div className="px-5 py-4 border-b border-gray-800 bg-[#111]">
-                                <p className="text-[10px] text-gray-500 uppercase tracking-[0.2em] font-bold">Tài khoản</p>
+                            <div className="px-5 py-4 border-b border-[#D4BAB6] bg-[#f9f0ee]">
+                                <p className="text-[10px] text-[#800020]/60 uppercase tracking-[0.2em] font-bold">Tài khoản</p>
                             </div>
                             <button 
                                 onClick={() => { setOpen(false); navigate('/login'); }} 
-                                className="w-full text-left px-5 py-4 hover:bg-gray-800 transition-all text-sm font-semibold border-b border-gray-800/30"
+                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm font-semibold border-b border-[#D4BAB6]/30 text-[#4a0012]"
                             >
                                 Đăng nhập
                             </button>
                             <button 
                                 onClick={() => { setOpen(false); navigate('/register'); }} 
-                                className="w-full text-left px-5 py-4 hover:bg-gray-800 transition-all text-sm font-semibold text-yellow-500"
+                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm font-semibold text-[#800020]"
                             >
                                 Đăng ký
                             </button>
                         </>
                     ) : (
                         <>
-                            <div className="px-5 py-4 border-b border-gray-800 bg-gradient-to-r from-[#222] to-[#111]">
-                                <p className="text-[9px] text-gray-500 uppercase tracking-[0.3em] font-black mb-1">Xin chào!</p>
-                                <p className="text-sm font-bold text-yellow-500 truncate drop-shadow-sm">{user.full_name}</p>
+                            <div className="px-5 py-4 border-b border-[#D4BAB6] bg-[#f9f0ee]">
+                                <p className="text-[9px] text-[#800020]/60 uppercase tracking-[0.3em] font-black mb-1">Xin chào!</p>
+                                <p className="text-sm font-bold text-[#800020] truncate">{user.full_name}</p>
                             </div>
                             <button 
                                 onClick={() => { setOpen(false); navigate('/thong-tin-dat-ve'); }} 
-                                className="w-full text-left px-5 py-4 hover:bg-gray-800 transition-all text-sm group"
+                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm group text-[#4a0012]"
                             >
                                 <span className="group-hover:translate-x-1 inline-block transition-transform">Thông tin đặt vé</span>
                             </button>
                             <button 
                                 onClick={() => { setOpen(false); navigate('/profile'); }} 
-                                className="w-full text-left px-5 py-4 hover:bg-gray-800 transition-all text-sm group"
+                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm group text-[#4a0012]"
                             >
                                 <span className="group-hover:translate-x-1 inline-block transition-transform">Thông tin cá nhân</span>
                             </button>
-                            <div className="border-t border-gray-800 mt-2 bg-[#111]">
+                            <div className="border-t border-[#D4BAB6] mt-2 bg-[#f9f0ee]">
                                 <button 
                                     onClick={handleLogout} 
-                                    className="w-full text-left px-5 py-4 hover:bg-red-900/20 text-red-400 hover:text-red-300 transition-all text-sm font-black tracking-widest uppercase"
+                                    className="w-full text-left px-5 py-4 hover:bg-[#800020]/10 text-[#800020] hover:text-[#6b001a] transition-all text-sm font-black tracking-widest uppercase"
                                 >
                                     Đăng xuất
                                 </button>

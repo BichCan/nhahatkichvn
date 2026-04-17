@@ -10,6 +10,7 @@ export default function SearchBar() {
     const [portalStyle, setPortalStyle] = useState(null);
     const navigate = useNavigate();
     const inputRef = useRef(null);
+    const containerRef = useRef(null);
 
     const [performancesdata, setPerformancesData] = useState([]);
     const [artistsData, setArtistsData] = useState([]);
@@ -52,13 +53,13 @@ export default function SearchBar() {
         setOpen(true);
     }, [q, performancesdata, artistsData, newsData]);
 
-    // compute portal position so dropdown appears right under the input and above everything
+    // compute portal position
     const updatePortalPosition = () => {
-        const el = inputRef.current;
+        const el = containerRef.current;
         if (!el) return setPortalStyle(null);
         const rect = el.getBoundingClientRect();
         setPortalStyle({
-            top: rect.bottom + window.scrollY + 8,
+            top: rect.bottom + window.scrollY + 6,
             left: rect.left + window.scrollX,
             width: rect.width
         });
@@ -69,8 +70,8 @@ export default function SearchBar() {
     }, [open, q]);
 
     useEffect(() => {
-        const onResize = () => open && updatePortalPosition();
-        const onScroll = () => open && updatePortalPosition();
+        const onResize = () => { if (open) updatePortalPosition(); };
+        const onScroll = () => { if (open) updatePortalPosition(); };
         const onKey = (e) => { if (e.key === "Escape") setOpen(false); };
         window.addEventListener("resize", onResize);
         window.addEventListener("scroll", onScroll, true);
@@ -83,10 +84,8 @@ export default function SearchBar() {
     }, [open]);
 
     useEffect(() => {
-        // close on outside click
         function onClick(e) {
-            if (inputRef.current && !inputRef.current.contains(e.target)) {
-                // if click is outside input, also check if click is outside portal container by id
+            if (containerRef.current && !containerRef.current.contains(e.target)) {
                 const portalEl = document.getElementById("search-portal");
                 if (!portalEl || !portalEl.contains(e.target)) setOpen(false);
             }
@@ -123,9 +122,8 @@ export default function SearchBar() {
                 width: portalStyle?.width ?? 300,
                 zIndex: 9999
             }}
-            className="text-white"
         >
-            <div className="bg-black text-white rounded-xl shadow-lg border border-gray-800 max-h-72 overflow-auto">
+            <div className="bg-white text-gray-800 rounded-xl shadow-2xl border border-gray-200 max-h-72 overflow-auto">
                 <div className="p-3">
                     {(results.performances.length === 0 && results.artists.length === 0 && results.news.length === 0) ? (
                         <div className="text-sm text-gray-400">Không có kết quả</div>
@@ -133,13 +131,13 @@ export default function SearchBar() {
                         <>
                             {results.performances.length > 0 && (
                                 <div>
-                                    <div className="text-xs text-gray-400 uppercase mb-2">Vở diễn</div>
-                                    <ul className="space-y-1 mb-3">
+                                    <div className="text-xs text-[#800020] uppercase mb-2 font-bold tracking-wide">Vở diễn</div>
+                                    <ul className="space-y-0.5 mb-3">
                                         {results.performances.map(p => (
                                             <li key={p.id}>
                                                 <button
                                                     onClick={() => onSelectPerformance(p)}
-                                                    className="w-full text-left text-sm px-2 py-1 rounded hover:bg-gray-800"
+                                                    className="w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-[#D4BAB6]/30 transition-colors"
                                                 >
                                                     {p.name}
                                                 </button>
@@ -151,13 +149,13 @@ export default function SearchBar() {
 
                             {results.artists.length > 0 && (
                                 <div>
-                                    <div className="text-xs text-gray-400 uppercase mb-2">Nghệ sĩ</div>
-                                    <ul className="space-y-1 mb-3">
+                                    <div className="text-xs text-[#800020] uppercase mb-2 font-bold tracking-wide">Nghệ sĩ</div>
+                                    <ul className="space-y-0.5 mb-3">
                                         {results.artists.map(a => (
                                             <li key={a.id}>
                                                 <button
                                                     onClick={() => onSelectArtist(a)}
-                                                    className="w-full text-left text-sm px-2 py-1 rounded hover:bg-gray-800"
+                                                    className="w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-[#D4BAB6]/30 transition-colors"
                                                 >
                                                     {a.name}
                                                 </button>
@@ -169,13 +167,13 @@ export default function SearchBar() {
 
                             {results.news.length > 0 && (
                                 <div>
-                                    <div className="text-xs text-gray-400 uppercase mb-2">Tin tức</div>
-                                    <ul className="space-y-1">
+                                    <div className="text-xs text-[#800020] uppercase mb-2 font-bold tracking-wide">Tin tức</div>
+                                    <ul className="space-y-0.5">
                                         {results.news.map(n => (
                                             <li key={n.id}>
                                                 <button
                                                     onClick={() => onSelectNews(n)}
-                                                    className="w-full text-left text-sm px-2 py-1 rounded hover:bg-gray-800"
+                                                    className="w-full text-left text-sm px-3 py-1.5 rounded-lg hover:bg-[#D4BAB6]/30 transition-colors"
                                                 >
                                                     {n.title}
                                                 </button>
@@ -193,26 +191,21 @@ export default function SearchBar() {
 
     return (
         <>
-            <div className="relative w-full max-w-2xl px-4">
+            <div ref={containerRef} className="relative w-52 sm:w-60 lg:w-64 xl:w-72">
                 <div className="relative">
+                    <span className="absolute left-3.5 top-1/2 -translate-y-1/2 text-gray-400 pointer-events-none">
+                        <FaSearch className="text-sm" />
+                    </span>
                     <input
                         ref={inputRef}
                         value={q}
                         onChange={(e) => setQ(e.target.value)}
-                        onFocus={() => { if (q.trim()) setOpen(true); updatePortalPosition(); }}
+                        onFocus={() => { if (q.trim()) { setOpen(true); updatePortalPosition(); } }}
                         type="text"
-                        placeholder="Tìm kiếm vở diễn / nghệ sĩ / tin tức..."
-                        className="w-full h-12 pl-4 pr-12 rounded-full bg-[#1f1f1f] text-white placeholder-gray-400 focus:outline-none"
+                        placeholder="Tìm kiếm vở diễn..."
+                        className="w-full h-9 pl-10 pr-4 rounded-full bg-white text-gray-700 text-sm placeholder-gray-400 border-none outline-none shadow-sm focus:shadow-md focus:ring-2 focus:ring-[#800020]/20 transition-shadow"
                         aria-label="Search"
                     />
-                    <button
-                        type="button"
-                        className="absolute right-3 top-1/2 transform -translate-y-1/2 text-white p-2"
-                        aria-label="Search"
-                        onClick={() => { if (q.trim()) setOpen(true); updatePortalPosition(); }}
-                    >
-                        <FaSearch />
-                    </button>
                 </div>
             </div>
 

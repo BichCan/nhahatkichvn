@@ -1,6 +1,6 @@
 import Header from "./header/Header";
 import Footer from "./footer/Footer";
-import Navbar from "./navbar/Navbar";
+// Navbar is now integrated into Header
 import {Route, Routes} from "react-router-dom";
 import HomePage from "../pages/home/HomePage";
 import History from "../pages/about/History";
@@ -27,7 +27,7 @@ function MainLayout({ children }) {
   return (
     <>
       {!isLoginPage && <Header />}
-      {!isLoginPage && <Navbar />}
+
       <main className="min-w-full">
         <Routes>
           <Route path="/" element={<HomePage />} />
