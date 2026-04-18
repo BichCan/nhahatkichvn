@@ -158,6 +158,8 @@ export default function BookingPage() {
                     <SeatMap 
                         className=" absolute w-full h-auto"
                         performanceId={performanceId}
+                        selectedDate={selectedDate}
+                        selectedTime={selectedTime}
                         selectedSeats={selectedSeats}
                         onSelectSeats={handleSeatSelect}
                     />

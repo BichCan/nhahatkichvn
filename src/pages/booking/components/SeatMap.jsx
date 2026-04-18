@@ -9,7 +9,7 @@ import API_URL from '../../../config/api';
 
 const socket = io(API_URL);
 
-export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, performanceId }) {
+export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, performanceId, selectedDate, selectedTime }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
     const [realTimeSeats, setRealTimeSeats] = useState({ booked: [], holding: {} });
     const [dbSeats, setDbSeats] = useState([]);
@@ -25,8 +25,11 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
     const currentUserId = currentUser?.id || null;
 
     useEffect(() => {
+        if (!selectedDate || !selectedTime) return;
+        
         // Lấy trạng thái ban đầu
-        fetch(`${API_URL}/api/seat-status/${performanceId}`)
+        const params = new URLSearchParams({ date: selectedDate, time: selectedTime });
+        fetch(`${API_URL}/api/seat-status/${performanceId}?${params.toString()}`)
             .then(res => res.json())
             .then(data => {
                 if (data && !data.success && data.message) {
@@ -39,7 +42,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
 
         // Lắng nghe cập nhật real-time
         socket.on('seat_update', (data) => {
-            if (data.session_id === parseInt(performanceId)) {
+            if (data.performance_id === parseInt(performanceId) && data.date === selectedDate && data.time === selectedTime) {
                 setRealTimeSeats(data.seats);
             }
         });
@@ -47,7 +50,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
         return () => {
             socket.off('seat_update');
         };
-    }, [performanceId]);
+    }, [performanceId, selectedDate, selectedTime]);
 
     // Fetch thông tin cấu hình ghế (nếu cần)
     useEffect(() => {
@@ -97,6 +100,11 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
 
     // Xử lý chọn/bỏ chọn ghế
     const handleSeatSelect = async (row, number) => {
+        if (!selectedDate || !selectedTime) {
+            alert('Vui lòng chọn ngày và giờ chiếu trước khi chọn ghế!');
+            return;
+        }
+
         const seatId = `${row}${number}`;
         
         // Nếu ghế đã bị giữ bởi người khác hoặc đã đặt
@@ -109,6 +117,35 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
             }
         }
 
+        if (selectedSeats.includes(seatId)) {
+            // Gọi API release-seat để bỏ giữ
+            try {
+                const response = await fetch(`${API_URL}/api/cancel-hold`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        performance_id: performanceId,
+                        date: selectedDate,
+                        time: selectedTime,
+                        seat_id: seatId,
+                        user_id: currentUserId
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    setSelectedSeats(prev => {
+                        const newSelected = prev.filter(s => s !== seatId);
+                        updateParentState(newSelected);
+                        return newSelected;
+                    });
+                }
+            } catch (err) {
+                console.error("Error cancelling hold:", err);
+            }
+            return;
+        }
+
         // Gọi API hold-seat
         try {
             const response = await fetch(`${API_URL}/api/hold-seat`, {
@@ -116,7 +153,9 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',
                 body: JSON.stringify({
-                    session_id: performanceId,
+                    performance_id: performanceId,
+                    date: selectedDate,
+                    time: selectedTime,
                     seat_id: seatId,
                     user_id: currentUserId
                 })
@@ -131,16 +170,17 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
             // Cập nhật local state
             setSelectedSeats(prev => {
                 let newSelected;
-                if (prev.includes(seatId)) {
-                    newSelected = prev.filter(s => s !== seatId);
-                    // Lưu ý: Trong thực tế bạn cần API release-seat nếu muốn bỏ giữ
-                } else {
-                    if (prev.length >= maxSeats) {
-                        alert(`Bạn chỉ có thể chọn tối đa ${maxSeats} ghế!`);
-                        return prev;
-                    }
-                    newSelected = [...prev, seatId];
+                if (prev.length >= maxSeats) {
+                    alert(`Bạn chỉ có thể chọn tối đa ${maxSeats} ghế!`);
+                    // rollback hold in background
+                    fetch(`${API_URL}/api/cancel-hold`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ performance_id: performanceId, date: selectedDate, time: selectedTime, seat_id: seatId, user_id: currentUserId })
+                    });
+                    return prev;
                 }
+                newSelected = [...prev, seatId];
                 
                 // Cập nhật lên component cha
                 updateParentState(newSelected);

@@ -23,13 +23,19 @@ logger = logging.getLogger(__name__)
 # Initialize SocketIO
 socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
 
-# Redis connection for seat holding
-redis_client = redis.Redis(
-    host=os.getenv('REDIS_HOST', 'localhost'),
-    port=int(os.getenv('REDIS_PORT', 6379)),
-    db=int(os.getenv('REDIS_DB', 0)),
-    decode_responses=True
-)
+import threading
+import time
+import uuid
+
+# Background thread for expiry
+def run_background_cleanup():
+    while True:
+        time.sleep(60)
+        try:
+            import requests
+            requests.post('http://127.0.0.1:5000/api/internal/cleanup')
+        except:
+            pass
 
 # (PostgreSQL Pool removed)
 
@@ -90,158 +96,209 @@ def handle_connect():
 def handle_disconnect():
     logger.info(f"Client disconnected: {request.sid}")
 
-def broadcast_seat_update(session_id):
-    """Gửi trạng thái ghế mới nhất cho tất cả các client trong session"""
-    seats_status = get_current_seat_status(session_id)
-    socketio.emit('seat_update', {'session_id': session_id, 'seats': seats_status})
 
-def get_current_seat_status(session_id):
-    """Lấy trạng thái ghế từ Postgres (đã đặt) và Redis (đang giữ)"""
-    # Ở đây chúng ta giả sử có bảng seats trong Postgres
-    # Trạng thái: available, holding, booked
-    
-    # 1. Lấy ghế đã đặt từ SQLite
-    booked_seats = []
+@app.route('/api/internal/cleanup', methods=['POST'])
+def internal_cleanup():
+    cleanup_expired_holds()
+    return jsonify({"success": True})
+
+def cleanup_expired_holds():
+    """System job to cancel expired holding bookings and revert tickets"""
     conn = get_db_connection()
     try:
         c = conn.cursor()
-        c.execute("SELECT seat_id FROM bookings WHERE performance_id = ?", (session_id,))
-        booked_seats = [row['seat_id'] for row in c.fetchall()]
+        c.execute('''
+            SELECT id, performance_id, show_date, show_time, seat_id 
+            FROM bookings 
+            WHERE status = 'holding' AND hold_expiry_time <= CURRENT_TIMESTAMP
+        ''')
+        expired_bookings = c.fetchall()
+        
+        for b in expired_bookings:
+            c.execute("UPDATE bookings SET status = 'expired' WHERE id = ?", (b['id'],))
+            db_start_time = f"{b['show_date']} {b['show_time']}:00"
+            c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (b['performance_id'], db_start_time))
+            play_row = c.fetchone()
+            if play_row:
+                play_id = play_row['id']
+                c.execute('''
+                    UPDATE tickets 
+                    SET status = 'available', held_by_user_id = NULL, hold_expired_at = NULL 
+                    WHERE play_id = ? AND seat_id = ? AND status = 'holding'
+                ''', (play_id, b['seat_id']))
+                
+            broadcast_seat_update(b['performance_id'], b['show_date'], b['show_time'])
+        conn.commit()
     except Exception as e:
-        logger.error(f"Lỗi khi lấy trạng thái ghế từ SQLite: {e}")
+        logger.error(f"Lỗi dọn ghế: {e}")
     finally:
         conn.close()
-            
-    # 2. Lấy ghế đang bị giữ từ Redis
-    # Pattern Redis key: seat_hold:{session_id}:{seat_id}
-    hold_keys = redis_client.keys(f"seat_hold:{session_id}:*")
-    holding_seats = {}
-    for key in hold_keys:
-        seat_id = key.split(':')[-1]
-        user_info = redis_client.get(key)
-        ttl = redis_client.ttl(key)
-        holding_seats[seat_id] = {
-            "user_id": user_info,
-            "expires_in": ttl
-        }
-        
-    return {
-        "booked": booked_seats,
-        "holding": holding_seats
-    }
 
-# --- NEW API ENDPOINTS ---
+def broadcast_seat_update(performance_id, date, time):
+    """Gửi trạng thái ghế mới nhất"""
+    seats_status = get_current_seat_status(performance_id, date, time)
+    socketio.emit('seat_update', {'performance_id': performance_id, 'date': date, 'time': time, 'seats': seats_status})
+
+def get_current_seat_status(performance_id, date, time):
+    booked_seats = []
+    holding_seats = {}
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('''
+            SELECT seat_id, user_id, hold_expiry_time
+            FROM bookings 
+            WHERE performance_id = ? AND show_date = ? AND show_time = ? AND status = 'holding' AND hold_expiry_time > CURRENT_TIMESTAMP
+        ''', (performance_id, date, time))
+        for row in c.fetchall():
+            from datetime import datetime
+            expiry = datetime.strptime(row['hold_expiry_time'], '%Y-%m-%d %H:%M:%S')
+            ttl = (expiry - datetime.now()).total_seconds()
+            holding_seats[row['seat_id']] = {
+                "user_id": row['user_id'],
+                "expires_in": int(ttl) if ttl > 0 else 0
+            }
+            
+        c.execute('''
+            SELECT seat_id
+            FROM bookings 
+            WHERE performance_id = ? AND show_date = ? AND show_time = ? AND status = 'converted'
+        ''', (performance_id, date, time))
+        booked_seats = [row['seat_id'] for row in c.fetchall()]
+    finally:
+        conn.close()
+    return {"booked": booked_seats, "holding": holding_seats}
+
+@app.route('/api/seat-status/<int:performance_id>', methods=['GET'])
+def get_seat_status(performance_id):
+    date = request.args.get('date')
+    time_str = request.args.get('time')
+    if not date or not time_str:
+        return jsonify({"success": False, "message": "Thiếu date và time"}), 400
+    try:
+        return jsonify(get_current_seat_status(performance_id, date, time_str))
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
 
 @app.route('/api/hold-seat', methods=['POST'])
 def hold_seat():
-    """
-    Giữ ghế tạm thời trong Redis với TTL 10 phút.
-    Input: {session_id, seat_id, user_id}
-    """
     data = request.json
-    session_id = data.get('session_id')
+    performance_id = data.get('performance_id')
+    date = data.get('date')
+    time_str = data.get('time')
     seat_id = data.get('seat_id')
     user_id = data.get('user_id') or session.get('user_id')
     
-    if not all([session_id, seat_id, user_id]):
-        return jsonify({"success": False, "message": "Thiếu thông tin bắt buộc"}), 400
-        
-    # Key định danh duy nhất cho ghế trong suất diễn
-    hold_key = f"seat_hold:{session_id}:{seat_id}"
+    missing = []
+    if not performance_id: missing.append('performance_id')
+    if not date: missing.append('date')
+    if not time_str: missing.append('time')
+    if not seat_id: missing.append('seat_id')
+    if not user_id: missing.append('user_id (Bạn cần đăng nhập trước khi chọn ghế)')
     
-    # Thử đặt khóa trong Redis (NX = Only set if not exist)
-    # TTL là 600 giây (10 phút)
-    success = redis_client.set(hold_key, str(user_id), nx=True, ex=600)
-    
-    if success:
-        logger.info(f"User {user_id} giữ ghế {seat_id} trong session {session_id}")
-        broadcast_seat_update(session_id)
-        return jsonify({
-            "success": True, 
-            "hold_id": hold_key,
-            "expires_at": (datetime.now() + timedelta(minutes=10)).isoformat(),
-            "message": "Giữ ghế thành công"
-        })
-    else:
-        # Kiểm tra xem có phải chính user này đang giữ không
-        current_holder = redis_client.get(hold_key)
-        if current_holder == str(user_id):
-            return jsonify({"success": True, "message": "Bạn đang giữ ghế này rồi"})
-            
-        return jsonify({"success": False, "message": "Ghế đã có người khác giữ hoặc đã đặt"}), 409
-
-@app.route('/api/confirm-booking', methods=['POST'])
-def confirm_booking():
-    """
-    Xác nhận đặt vé, chuyển từ trạng thái 'holding' sang 'booked'.
-    Input: {hold_id, payment_info, ...}
-    """
-    data = request.json
-    hold_id = data.get('hold_id')
-    # hold_id có dạng: seat_hold:{session_id}:{seat_id}
-    parts = hold_id.split(':')
-    if len(parts) < 3:
-        return jsonify({"success": False, "message": "Mã giữ ghế không hợp lệ"}), 400
+    if missing:
+        return jsonify({"success": False, "message": f"Thiếu thông tin: {', '.join(missing)}"}), 400
         
-    session_id = parts[1]
-    seat_id = parts[2]
-    user_id = session.get('user_id')
-    
-    # 1. Kiểm tra quyền sở hữu trong Redis
-    current_holder = redis_client.get(hold_id)
-    if not current_holder:
-        return jsonify({"success": False, "message": "Phiên giữ ghế đã hết hạn"}), 410
-        
-    if str(user_id) != str(current_holder):
-        return jsonify({"success": False, "message": "Bạn không có quyền xác nhận ghế này"}), 403
-        
-    # 2. Lưu vào SQLite trong một transaction
+    db_start_time = f"{date} {time_str}:00"
     conn = get_db_connection()
     try:
         c = conn.cursor()
-        # Ở đây chúng ta thêm logic insert vào bảng bookings
+        c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (performance_id, db_start_time))
+        play_row = c.fetchone()
+        from datetime import datetime, timedelta
         import uuid
-        order_code = f"BK-{str(uuid.uuid4())[:8].upper()}"
+        now = datetime.now()
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        
+        if not play_row:
+            c.execute('''
+                INSERT INTO plays (performance_id, start_time, end_time, status, created_at, updated_at)
+                VALUES (?, ?, ?, ?, ?, ?)
+            ''', (performance_id, db_start_time, db_start_time, 'active', now_str, now_str))
+            play_id = c.lastrowid
+        else:
+            play_id = play_row['id']
+            
+        c.execute("SELECT id, status, held_by_user_id, hold_expired_at FROM tickets WHERE play_id = ? AND seat_id = ?", (play_id, seat_id))
+        ticket_row = c.fetchone()
+        
+        if not ticket_row:
+            c.execute('''
+                INSERT INTO tickets (play_id, seat_id, price, status, created_at, updated_at)
+                VALUES (?, ?, ?, 'available', ?, ?)
+            ''', (play_id, seat_id, 0, now_str, now_str))
+            ticket_id = c.lastrowid
+        else:
+            ticket_id = ticket_row['id']
+            ticket_status = ticket_row['status']
+            if ticket_status in ['paid', 'booked']:
+                return jsonify({"success": False, "message": "Ghế đã có người đặt"}), 409
+            if ticket_status == 'holding':
+                exp = datetime.strptime(ticket_row['hold_expired_at'], '%Y-%m-%d %H:%M:%S') if ticket_row['hold_expired_at'] else None
+                if exp and exp > now:
+                    if str(ticket_row['held_by_user_id']) == str(user_id):
+                        return jsonify({"success": True})
+                    return jsonify({"success": False, "message": "Ghế đang bị giữ"}), 409
+
+        expiry_time = now + timedelta(minutes=10)
+        expiry_str = expiry_time.strftime('%Y-%m-%d %H:%M:%S')
+        session_uid = str(uuid.uuid4())
         
         c.execute('''
-            INSERT INTO bookings (user_id, performance_id, seat_id, seat_row, seat_number, show_date, show_time, price, payment_method, order_code, created_at)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-        ''', (user_id, session_id, seat_id, "N/A", "N/A", "N/A", "N/A", 0, "Hold", order_code, datetime.now()))
-        
+            INSERT INTO bookings (user_id, performance_id, seat_id, seat_row, seat_number, show_date, show_time, price, payment_method, order_code, status, hold_start_time, hold_expiry_time, session_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'holding', ?, ?, ?)
+        ''', (user_id, performance_id, seat_id, seat_id[0], seat_id[1:], date, time_str, 0, 'Hold', '', now_str, expiry_str, session_uid))
         booking_id = c.lastrowid
+        
+        c.execute('''
+            UPDATE tickets 
+            SET status = 'holding', held_by_user_id = ?, hold_expired_at = ?, updated_at = ?
+            WHERE id = ?
+        ''', (user_id, expiry_str, now_str, ticket_id))
+        
         conn.commit()
-        
-        # 3. Xóa key trong Redis sau khi đã lưu DB thành công
-        redis_client.delete(hold_id)
-        
-        logger.info(f"Xác nhận đặt vé thành công: {booking_id}")
-        broadcast_seat_update(session_id)
-        
-        return jsonify({
-            "success": True,
-            "booking_id": booking_id,
-            "message": "Đặt vé thành công"
-        })
+        broadcast_seat_update(performance_id, date, time_str)
+        return jsonify({"success": True, "hold_id": booking_id, "expires_at": expiry_time.isoformat()})
     except Exception as e:
         conn.rollback()
-        logger.error(f"Lỗi khi xác nhận booking SQLite: {e}")
-        return jsonify({"success": False, "message": "Lỗi dữ liệu hệ thống"}), 500
+        return jsonify({"success": False, "message": str(e)}), 500
     finally:
         conn.close()
 
-@app.route('/api/seat-status/<int:session_id>', methods=['GET'])
-def get_seat_status(session_id):
-    """
-    Lấy trạng thái đầy đủ các ghế trong một session.
-    """
+@app.route('/api/cancel-hold', methods=['POST'])
+def cancel_hold():
+    data = request.json
+    performance_id = data.get('performance_id')
+    date = data.get('date')
+    time_str = data.get('time')
+    seat_id = data.get('seat_id')
+    user_id = data.get('user_id') or session.get('user_id')
+    
+    conn = get_db_connection()
     try:
-        status = get_current_seat_status(session_id)
-        return jsonify(status)
+        c = conn.cursor()
+        c.execute('''
+            UPDATE bookings SET status = 'cancelled', cancelled_reason = 'user_cancelled'
+            WHERE performance_id = ? AND show_date = ? AND show_time = ? AND seat_id = ? AND user_id = ? AND status = 'holding'
+        ''', (performance_id, date, time_str, seat_id, user_id))
+        
+        db_start_time = f"{date} {time_str}:00"
+        c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (performance_id, db_start_time))
+        play_row = c.fetchone()
+        if play_row:
+            c.execute('''
+                UPDATE tickets SET status = 'available', held_by_user_id = NULL, hold_expired_at = NULL 
+                WHERE play_id = ? AND seat_id = ? AND status = 'holding' AND held_by_user_id = ?
+            ''', (play_row['id'], seat_id, user_id))
+            
+        conn.commit()
+        broadcast_seat_update(performance_id, date, time_str)
+        return jsonify({"success": True})
     except Exception as e:
-        logger.error(f"Lỗi khi lấy trạng thái ghế: {e}")
+        conn.rollback()
         return jsonify({"success": False, "message": str(e)}), 500
-
-
+    finally:
+        conn.close()
 
 @app.route('/api/login', methods=['POST'])
 def login():
@@ -332,104 +389,84 @@ def handle_bookings():
     
     if request.method == 'POST':
         data = request.json
-        # Handle list of bookings (each seat is a booking)
         bookings = data.get('bookings', [])
         if not bookings:
              return jsonify({"success": False, "message": "Không có thông tin đặt vé"}), 400
-        
+             
         try:
+            import uuid
+            from datetime import datetime
+            now = datetime.now()
+            now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+            
+            # Extract common info from first booking (assuming all from same order)
+            total_amount = sum(b['price'] for b in bookings)
+            vat_amount = total_amount * 1.08
+            
+            payment_method = bookings[0].get('payment_method')
+            payment_status = 'paid' if payment_method in ['vnpay', 'shopeepay', 'bank'] else 'pending'
+            payment_date = now_str if payment_status == 'paid' else None
+            
+            order_id = f"ORD-{now.strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+            
+            # 1. Insert Order
+            c.execute('''
+                INSERT INTO orders (
+                    order_id, user_id, total_amount, payment_status, payment_method,
+                    payment_date, created_at, updated_at
+                ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+            ''', (
+                order_id, user_id, vat_amount, payment_status, payment_method,
+                payment_date, now_str, now_str
+            ))
+            
             for b in bookings:
+                # show_date might be DD/MM/YYYY or YYYY-MM-DD
+                date_str = b['show_date']
+                if '/' in date_str:
+                    date_parts = date_str.split('/')
+                    db_date = f"{date_parts[2]}-{date_parts[1]}-{date_parts[0]}"
+                else:
+                    db_date = date_str
+                    
+                db_start_time = f"{db_date} {b['show_time']}:00"
+                
+                # Update holding booking status to converted
                 c.execute('''
-                    INSERT INTO bookings (
-                        user_id, performance_id, seat_id, seat_row, seat_number, 
-                        show_date, show_time, price, payment_method, order_code
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    user_id, b['performance_id'], b['seat_id'], b['seat_row'], b['seat_number'],
-                    b['show_date'], b['show_time'], b['price'], b['payment_method'], b['order_code']
-                ))
+                    UPDATE bookings 
+                    SET status = 'converted', converted_to_order_id = ?, price = ?, order_code = ?
+                    WHERE user_id = ? AND performance_id = ? AND seat_id = ? AND status = 'holding'
+                ''', (order_id, b['price'], b['order_code'], user_id, b['performance_id'], b['seat_id']))
                 
-            # If payment is cash, we create an order and corresponding tickets
-            if bookings and bookings[0].get('payment_method') in ['cash', 'Tiền mặt']:
-                import uuid
-                from datetime import datetime
+                # Get play_id
+                c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (b['performance_id'], db_start_time))
+                play_row = c.fetchone()
+                if not play_row:
+                    raise Exception("Không tìm thấy suất diễn")
+                play_id = play_row['id']
                 
-                now = datetime.now()
-                order_id = f"ORD-{now.strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
-                total_amount = sum(b['price'] for b in bookings)
+                # Update ticket
+                ticket_status = 'paid' if payment_status == 'paid' else 'booked'
                 
                 c.execute('''
-                    INSERT INTO orders (
-                        order_id, user_id, total_amount, payment_status, payment_method,
-                        payment_date, created_at, updated_at
-                    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                ''', (
-                    order_id, user_id, total_amount, 'pending', 'cash',
-                    now.strftime('%Y-%m-%d %H:%M:%S'), now.strftime('%Y-%m-%d %H:%M:%S'), now.strftime('%Y-%m-%d %H:%M:%S')
-                ))
+                    UPDATE tickets 
+                    SET status = ?, order_id = ?, price = ?, hold_expired_at = NULL, updated_at = ?
+                    WHERE play_id = ? AND seat_id = ?
+                ''', (ticket_status, order_id, b['price'], now_str, play_id, b['seat_id']))
                 
-                for b in bookings:
-                    # Convert 'DD/MM/YYYY' to 'YYYY-MM-DD'
-                    date_parts = str(b['show_date']).split('/')
-                    if len(date_parts) == 3:
-                        db_date = f"{date_parts[2]}-{date_parts[1]}-{date_parts[0]}"
-                    else:
-                        db_date = b['show_date']
-                    db_start_time = f"{db_date} {b['show_time']}:00"
-                    
-                    # Find play_id
-                    c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (b['performance_id'], db_start_time))
-                    play_row = c.fetchone()
-                    
-                    if play_row:
-                        play_id = play_row['id']
-                    else:
-                        # Auto-create the play if it doesn't exist
-                        c.execute('''
-                            INSERT INTO plays (performance_id, start_time, end_time, status, created_at, updated_at)
-                            VALUES (?, ?, ?, ?, ?, ?)
-                        ''', (
-                            b['performance_id'], db_start_time, db_start_time, 'active',
-                            now.strftime('%Y-%m-%d %H:%M:%S'), now.strftime('%Y-%m-%d %H:%M:%S')
-                        ))
-                        play_id = c.lastrowid
-                        
-                    # Find or Create seat_id properly
-                    s_row = b.get('seat_row')
-                    s_num = b.get('seat_number')
-                    c.execute("SELECT id FROM seats WHERE seat_row = ? AND seat_number = ?", (s_row, s_num))
-                    seat_db_row = c.fetchone()
-                    
-                    if seat_db_row:
-                        real_seat_id = seat_db_row['id']
-                    else:
-                        try:
-                            # If for some reason seat_id is just an int string like '15'
-                            real_seat_id = int(b.get('seat_id'))
-                        except (ValueError, TypeError):
-                            # Auto-create the seat to maintain foreign key integrity
-                            c.execute('''
-                                INSERT INTO seats (seat_row, seat_number, seat_type_id, is_active, created_at)
-                                VALUES (?, ?, ?, ?, ?)
-                            ''', (s_row, s_num, 1, 1, now.strftime('%Y-%m-%d %H:%M:%S')))
-                            real_seat_id = c.lastrowid
-                            
-                    c.execute('''
-                        INSERT INTO tickets (
-                            play_id, seat_id, price, status, held_by_user_id, order_id, created_at, updated_at
-                        ) VALUES (?, ?, ?, ?, ?, ?, ?, ?)
-                    ''', (
-                        play_id, real_seat_id, int(b['price']), 'paid', user_id, order_id, 
-                        now.strftime('%Y-%m-%d %H:%M:%S'), now.strftime('%Y-%m-%d %H:%M:%S')
-                    ))
-                    ticket_id = c.lastrowid
+                # Get ticket_id to insert to order_details
+                c.execute("SELECT id FROM tickets WHERE play_id = ? AND seat_id = ?", (play_id, b['seat_id']))
+                ticket_id_row = c.fetchone()
+                if ticket_id_row:
                     c.execute('''
                         INSERT INTO order_details (order_id, ticket_id, price)
                         VALUES (?, ?, ?)
-                    ''', (order_id, ticket_id, int(b['price'])))
-            
+                    ''', (order_id, ticket_id_row['id'], b['price']))
+                
+                broadcast_seat_update(b['performance_id'], db_date, b['show_time'])
+                
             conn.commit()
-            return jsonify({"success": True, "message": "Đặt vé thành công"})
+            return jsonify({"success": True, "message": "Đặt vé thành công", "order_id": order_id})
         except Exception as e:
             conn.rollback()
             return jsonify({"success": False, "message": str(e)}), 500
@@ -743,5 +780,6 @@ def get_ratings(performance_id):
     return jsonify({"avg": avg, "count": agg['cnt'], "reviews": ratings})
 
 if __name__ == '__main__':
+    threading.Thread(target=run_background_cleanup, daemon=True).start()
     init_db()
     socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)
