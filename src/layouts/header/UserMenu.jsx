@@ -122,16 +122,16 @@ export default function UserMenu() {
                                 <p className="text-sm font-bold text-[#800020] truncate">{user.full_name}</p>
                             </div>
                             <button 
+                                onClick={() => { setOpen(false); navigate('/thong-tin-tai-khoan'); }} 
+                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm group text-[#4a0012]"
+                            >
+                                <span className="group-hover:translate-x-1 inline-block transition-transform">Thông tin tài khoản</span>
+                            </button>
+                            <button 
                                 onClick={() => { setOpen(false); navigate('/thong-tin-dat-ve'); }} 
                                 className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm group text-[#4a0012]"
                             >
                                 <span className="group-hover:translate-x-1 inline-block transition-transform">Thông tin đặt vé</span>
-                            </button>
-                            <button 
-                                onClick={() => { setOpen(false); navigate('/profile'); }} 
-                                className="w-full text-left px-5 py-4 hover:bg-[#D4BAB6]/20 transition-all text-sm group text-[#4a0012]"
-                            >
-                                <span className="group-hover:translate-x-1 inline-block transition-transform">Thông tin cá nhân</span>
                             </button>
                             <div className="border-t border-[#D4BAB6] mt-2 bg-[#f9f0ee]">
                                 <button 

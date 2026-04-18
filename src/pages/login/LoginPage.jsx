@@ -1,7 +1,7 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
 import { FaArrowRight } from 'react-icons/fa';
-
+import API_URL from '../../config/api';
 const LoginPage = () => {
     const [email, setEmail] = useState('');
     const [password, setPassword] = useState('');
@@ -15,7 +15,7 @@ const LoginPage = () => {
         setLoading(true);
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/login', {
+            const response = await fetch(`${API_URL}/api/login`, {
                 method: 'POST',
                 headers: {
                     'Content-Type': 'application/json',
@@ -45,11 +45,11 @@ const LoginPage = () => {
     return (
         <div className="min-h-screen w-full flex items-center justify-center bg-[#fdfcf9] relative overflow-hidden">
             {/* Grid Background */}
-            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none" 
-                 style={{ 
-                     backgroundImage: 'linear-gradient(#8b1d21 1px, transparent 1px), linear-gradient(90deg, #8b1d21 1px, transparent 1px)',
-                     backgroundSize: '40px 40px' 
-                 }}>
+            <div className="absolute inset-0 z-0 opacity-10 pointer-events-none"
+                style={{
+                    backgroundImage: 'linear-gradient(#8b1d21 1px, transparent 1px), linear-gradient(90deg, #8b1d21 1px, transparent 1px)',
+                    backgroundSize: '40px 40px'
+                }}>
             </div>
 
             {/* Login Card */}
@@ -57,7 +57,7 @@ const LoginPage = () => {
                 <div className="text-center mb-8">
                     <div className="w-24 h-[1px] bg-gray-300 mx-auto mb-4"></div>
                     <p className="text-[10px] tracking-[0.2em] text-gray-500 font-medium mb-6 uppercase">Chào mừng quý khách</p>
-                    
+
                     <h1 className="text-3xl md:text-4xl font-serif font-bold text-[#8b1d21] leading-tight mb-1">
                         Nhà Hát Kịch <br /> Việt Nam
                     </h1>
@@ -102,9 +102,9 @@ const LoginPage = () => {
                     </div>
 
                     <div className="flex items-center space-x-2">
-                        <input 
-                            type="checkbox" 
-                            id="remember" 
+                        <input
+                            type="checkbox"
+                            id="remember"
                             className="w-3 h-3 rounded border-gray-300 text-[#8b1d21] focus:ring-[#8b1d21]"
                         />
                         <label htmlFor="remember" className="text-[11px] text-gray-500">Ghi nhớ đăng nhập</label>
@@ -118,13 +118,13 @@ const LoginPage = () => {
                         <span>{loading ? 'ĐANG XỬ LÝ...' : 'ĐĂNG NHẬP'}</span>
                         {!loading && <FaArrowRight className="text-[10px]" />}
                     </button>
-                    
+
                     <div className="text-center py-2">
                         <span className="text-[10px] italic text-gray-400">hoặc</span>
                     </div>
 
-                    <Link 
-                        to="/register" 
+                    <Link
+                        to="/register"
                         className="w-full border border-gray-200 text-gray-600 py-4 rounded-sm font-bold tracking-widest text-[10px] flex items-center justify-center hover:bg-gray-50 transition-all uppercase"
                     >
                         Tạo tài khoản mới

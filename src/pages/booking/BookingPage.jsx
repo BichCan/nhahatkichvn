@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
-import { useParams } from 'react-router-dom';
+import { useParams, useLocation } from 'react-router-dom';
+import API_URL from '../../config/api';
 import HeroPoster from './components/HeroPoster';
 import MovieInfo from './components/MovieInfo';
 import ScheduleSelector from './components/ScheduleSelector';
@@ -9,17 +10,25 @@ import BookingFooter from './components/BookingFooter';
 
 export default function BookingPage() {
     const { performanceId } = useParams(); // Lấy ID từ URL
+    const location = useLocation();
+    
+    // Get pre-selected showtime from navigation state (if coming from PerformancePopup)
+    const preSelectedDate = location.state?.preSelectedDate;
+    const preSelectedTime = location.state?.preSelectedTime;
+
     const [selectedSeats, setSelectedSeats] = useState([]);
-    const [selectedDate, setSelectedDate] = useState(null);
-    const [selectedTime, setSelectedTime] = useState(null);
+    const [selectedDate, setSelectedDate] = useState(preSelectedDate || null);
+    const [selectedTime, setSelectedTime] = useState(preSelectedTime || null);
     const [performance, setPerformance] = useState(null);
     const [playSchedules, setPlaySchedules] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [timeLeft, setTimeLeft] = useState(600); // 10 minutes in seconds
+    const [timerActive, setTimerActive] = useState(false);
 
     useEffect(() => {
         Promise.all([
-            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
-            fetch('http://127.0.0.1:5000/api/plays').then(r => r.json())
+            fetch(`${API_URL}/api/performances`).then(r => r.json()),
+            fetch(`${API_URL}/api/plays`).then(r => r.json())
         ])
         .then(([perfData, playsData]) => {
             const perf = perfData.find(p => p.id === parseInt(performanceId));
@@ -32,6 +41,37 @@ export default function BookingPage() {
             setLoading(false);
         });
     }, [performanceId]);
+
+    // Timer logic
+    useEffect(() => {
+        let interval = null;
+        if (selectedSeats.length > 0 && !timerActive) {
+            setTimerActive(true);
+            setTimeLeft(600);
+        } else if (selectedSeats.length === 0 && timerActive) {
+            setTimerActive(false);
+            setTimeLeft(600);
+        }
+
+        if (timerActive && timeLeft > 0) {
+            interval = setInterval(() => {
+                setTimeLeft(prev => prev - 1);
+            }, 1000);
+        } else if (timeLeft === 0) {
+            setTimerActive(false);
+            setSelectedSeats([]);
+            alert("Đã hết thời gian giữ ghế. Vui lòng chọn lại ghế!");
+        }
+
+        return () => clearInterval(interval);
+    }, [selectedSeats, timerActive, timeLeft]);
+
+    // Format time MM:SS
+    const formatTimer = (seconds) => {
+        const mins = Math.floor(seconds / 60);
+        const secs = seconds % 60;
+        return `${mins.toString().padStart(2, '0')}:${secs.toString().padStart(2, '0')}`;
+    };
 
     if (loading) {
         return (
@@ -117,6 +157,7 @@ export default function BookingPage() {
                 <div>
                     <SeatMap 
                         className=" absolute w-full h-auto"
+                        performanceId={performanceId}
                         selectedSeats={selectedSeats}
                         onSelectSeats={handleSeatSelect}
                     />
@@ -129,6 +170,9 @@ export default function BookingPage() {
                 performanceId={performanceId}
                 selectedDate={selectedDate}
                 selectedTime={selectedTime}
+                timeLeft={timeLeft}
+                formatTimer={formatTimer}
+                timerActive={timerActive}
             />
         </div>
     );

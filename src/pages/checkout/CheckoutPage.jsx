@@ -1,5 +1,6 @@
 import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
+import API_URL from '../../config/api';
 import CardPay from './components/CardPay';
 import CardDrama from './components/CardDrama';
 import PopupCash from './components/PopupCash';
@@ -33,7 +34,7 @@ export default function CheckoutPage() {
             return;
         }
         
-        fetch('http://127.0.0.1:5000/api/performances')
+        fetch(`${API_URL}/api/performances`)
             .then(res => res.json())
             .then(data => {
                 const perf = data.find(p => p.id === parseInt(performanceId));
@@ -77,7 +78,7 @@ export default function CheckoutPage() {
         });
 
         try {
-            const response = await fetch('http://127.0.0.1:5000/api/bookings', {
+            const response = await fetch(`${API_URL}/api/bookings`, {
                 method: 'POST',
                 headers: { 'Content-Type': 'application/json' },
                 credentials: 'include',

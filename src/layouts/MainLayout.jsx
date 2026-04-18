@@ -18,6 +18,8 @@ import OrganisationStructure from "../pages/about/OrganisationStructure";
 import BookingPage from "../pages/booking/BookingPage"; // THÊM IMPORT
 import CheckoutPage from "../pages/checkout/CheckoutPage"; // THÊM IMPORT
 import LoginPage from "../pages/login/LoginPage"; // THÊM IMPORT
+import RegisterPage from "../pages/login/RegisterPage"; // THÊM IMPORT
+import AccountInfo from "../pages/login/AccountInfo"; // THÊM IMPORT
 import { useLocation } from "react-router-dom"; // THÊM IMPORT
 
 function MainLayout({ children }) {
@@ -46,6 +48,8 @@ function MainLayout({ children }) {
           <Route path="/thong-tin-dat-ve" element={<TicketInfo />} />
           <Route path="/gop-y" element={<Feedback />} />
           <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/thong-tin-tai-khoan" element={<AccountInfo />} />
         </Routes>
       </main>
       {!isLoginPage && <Footer />}

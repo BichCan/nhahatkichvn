@@ -2,10 +2,36 @@ from flask import Flask, jsonify, request, session
 from flask_cors import CORS
 import sqlite3
 import os
+import redis
+# (PostgreSQL imports removed)
+from flask_socketio import SocketIO, emit
+from dotenv import load_dotenv
+import logging
+from datetime import datetime, timedelta
+
+# Load environment variables
+load_dotenv()
 
 app = Flask(__name__)
-app.secret_key = 'nhahatkichvn_secret_key' # Replace with a more secure key in production
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000"])
+app.secret_key = os.getenv('SECRET_KEY', 'nhahatkichvn_secret_key')
+CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://192.168.1.13:3000", "http://localhost:5000", "http://127.0.0.1:5000"])
+
+# Setup Logging
+logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
+logger = logging.getLogger(__name__)
+
+# Initialize SocketIO
+socketio = SocketIO(app, cors_allowed_origins="*", async_mode='threading')
+
+# Redis connection for seat holding
+redis_client = redis.Redis(
+    host=os.getenv('REDIS_HOST', 'localhost'),
+    port=int(os.getenv('REDIS_PORT', 6379)),
+    db=int(os.getenv('REDIS_DB', 0)),
+    decode_responses=True
+)
+
+# (PostgreSQL Pool removed)
 
 # Session configuration for local development
 app.config.update(
@@ -55,6 +81,166 @@ def init_db():
     conn.commit()
     conn.close()
 
+# Socket.IO Event Handlers
+@socketio.on('connect')
+def handle_connect():
+    logger.info(f"Client connected: {request.sid}")
+
+@socketio.on('disconnect')
+def handle_disconnect():
+    logger.info(f"Client disconnected: {request.sid}")
+
+def broadcast_seat_update(session_id):
+    """Gửi trạng thái ghế mới nhất cho tất cả các client trong session"""
+    seats_status = get_current_seat_status(session_id)
+    socketio.emit('seat_update', {'session_id': session_id, 'seats': seats_status})
+
+def get_current_seat_status(session_id):
+    """Lấy trạng thái ghế từ Postgres (đã đặt) và Redis (đang giữ)"""
+    # Ở đây chúng ta giả sử có bảng seats trong Postgres
+    # Trạng thái: available, holding, booked
+    
+    # 1. Lấy ghế đã đặt từ SQLite
+    booked_seats = []
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute("SELECT seat_id FROM bookings WHERE performance_id = ?", (session_id,))
+        booked_seats = [row['seat_id'] for row in c.fetchall()]
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy trạng thái ghế từ SQLite: {e}")
+    finally:
+        conn.close()
+            
+    # 2. Lấy ghế đang bị giữ từ Redis
+    # Pattern Redis key: seat_hold:{session_id}:{seat_id}
+    hold_keys = redis_client.keys(f"seat_hold:{session_id}:*")
+    holding_seats = {}
+    for key in hold_keys:
+        seat_id = key.split(':')[-1]
+        user_info = redis_client.get(key)
+        ttl = redis_client.ttl(key)
+        holding_seats[seat_id] = {
+            "user_id": user_info,
+            "expires_in": ttl
+        }
+        
+    return {
+        "booked": booked_seats,
+        "holding": holding_seats
+    }
+
+# --- NEW API ENDPOINTS ---
+
+@app.route('/api/hold-seat', methods=['POST'])
+def hold_seat():
+    """
+    Giữ ghế tạm thời trong Redis với TTL 10 phút.
+    Input: {session_id, seat_id, user_id}
+    """
+    data = request.json
+    session_id = data.get('session_id')
+    seat_id = data.get('seat_id')
+    user_id = data.get('user_id') or session.get('user_id')
+    
+    if not all([session_id, seat_id, user_id]):
+        return jsonify({"success": False, "message": "Thiếu thông tin bắt buộc"}), 400
+        
+    # Key định danh duy nhất cho ghế trong suất diễn
+    hold_key = f"seat_hold:{session_id}:{seat_id}"
+    
+    # Thử đặt khóa trong Redis (NX = Only set if not exist)
+    # TTL là 600 giây (10 phút)
+    success = redis_client.set(hold_key, str(user_id), nx=True, ex=600)
+    
+    if success:
+        logger.info(f"User {user_id} giữ ghế {seat_id} trong session {session_id}")
+        broadcast_seat_update(session_id)
+        return jsonify({
+            "success": True, 
+            "hold_id": hold_key,
+            "expires_at": (datetime.now() + timedelta(minutes=10)).isoformat(),
+            "message": "Giữ ghế thành công"
+        })
+    else:
+        # Kiểm tra xem có phải chính user này đang giữ không
+        current_holder = redis_client.get(hold_key)
+        if current_holder == str(user_id):
+            return jsonify({"success": True, "message": "Bạn đang giữ ghế này rồi"})
+            
+        return jsonify({"success": False, "message": "Ghế đã có người khác giữ hoặc đã đặt"}), 409
+
+@app.route('/api/confirm-booking', methods=['POST'])
+def confirm_booking():
+    """
+    Xác nhận đặt vé, chuyển từ trạng thái 'holding' sang 'booked'.
+    Input: {hold_id, payment_info, ...}
+    """
+    data = request.json
+    hold_id = data.get('hold_id')
+    # hold_id có dạng: seat_hold:{session_id}:{seat_id}
+    parts = hold_id.split(':')
+    if len(parts) < 3:
+        return jsonify({"success": False, "message": "Mã giữ ghế không hợp lệ"}), 400
+        
+    session_id = parts[1]
+    seat_id = parts[2]
+    user_id = session.get('user_id')
+    
+    # 1. Kiểm tra quyền sở hữu trong Redis
+    current_holder = redis_client.get(hold_id)
+    if not current_holder:
+        return jsonify({"success": False, "message": "Phiên giữ ghế đã hết hạn"}), 410
+        
+    if str(user_id) != str(current_holder):
+        return jsonify({"success": False, "message": "Bạn không có quyền xác nhận ghế này"}), 403
+        
+    # 2. Lưu vào SQLite trong một transaction
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Ở đây chúng ta thêm logic insert vào bảng bookings
+        import uuid
+        order_code = f"BK-{str(uuid.uuid4())[:8].upper()}"
+        
+        c.execute('''
+            INSERT INTO bookings (user_id, performance_id, seat_id, seat_row, seat_number, show_date, show_time, price, payment_method, order_code, created_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (user_id, session_id, seat_id, "N/A", "N/A", "N/A", "N/A", 0, "Hold", order_code, datetime.now()))
+        
+        booking_id = c.lastrowid
+        conn.commit()
+        
+        # 3. Xóa key trong Redis sau khi đã lưu DB thành công
+        redis_client.delete(hold_id)
+        
+        logger.info(f"Xác nhận đặt vé thành công: {booking_id}")
+        broadcast_seat_update(session_id)
+        
+        return jsonify({
+            "success": True,
+            "booking_id": booking_id,
+            "message": "Đặt vé thành công"
+        })
+    except Exception as e:
+        conn.rollback()
+        logger.error(f"Lỗi khi xác nhận booking SQLite: {e}")
+        return jsonify({"success": False, "message": "Lỗi dữ liệu hệ thống"}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/seat-status/<int:session_id>', methods=['GET'])
+def get_seat_status(session_id):
+    """
+    Lấy trạng thái đầy đủ các ghế trong một session.
+    """
+    try:
+        status = get_current_seat_status(session_id)
+        return jsonify(status)
+    except Exception as e:
+        logger.error(f"Lỗi khi lấy trạng thái ghế: {e}")
+        return jsonify({"success": False, "message": str(e)}), 500
+
 
 
 @app.route('/api/login', methods=['POST'])
@@ -76,6 +262,7 @@ def login():
         session.permanent = True
         session['user_id'] = user['id']
         session['user_name'] = user['full_name']
+        session['user_email'] = user['email']
         return jsonify({
             "success": True, 
             "message": "Đăng nhập thành công",
@@ -88,6 +275,34 @@ def login():
     else:
         return jsonify({"success": False, "message": "Email hoặc mật khẩu không chính xác"}), 401
 
+@app.route('/api/register', methods=['POST'])
+def register():
+    data = request.json
+    email = data.get('email')
+    password = data.get('password')
+    full_name = data.get('full_name')
+    
+    if not email or not password or not full_name:
+        return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ thông tin"}), 400
+        
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    # Check if email already exists
+    c.execute('SELECT * FROM users WHERE email = ?', (email,))
+    if c.fetchone():
+        conn.close()
+        return jsonify({"success": False, "message": "Email này đã được đăng ký"}), 400
+        
+    try:
+        c.execute('INSERT INTO users (email, password, full_name) VALUES (?, ?, ?)', (email, password, full_name))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đăng ký thành công! Vui lòng đăng nhập."})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
 @app.route('/api/check-session', methods=['GET'])
 def check_session():
     if 'user_id' in session:
@@ -95,7 +310,8 @@ def check_session():
             "logged_in": True,
             "user": {
                 "id": session['user_id'],
-                "full_name": session['user_name']
+                "full_name": session['user_name'],
+                "email": session.get('user_email', '')
             }
         })
     return jsonify({"logged_in": False})
@@ -528,4 +744,4 @@ def get_ratings(performance_id):
 
 if __name__ == '__main__':
     init_db()
-    app.run(host='127.0.0.1', port=5000, debug=True)
+    socketio.run(app, host='0.0.0.0', port=5000, debug=True, allow_unsafe_werkzeug=True)

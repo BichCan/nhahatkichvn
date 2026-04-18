@@ -74,7 +74,6 @@ export default function Performances() {
             const perf = performancesdata.find(p => p.id === openId);
             if (perf) {
                 setSelectedPerformance(perf);
-                document.body.style.overflow = 'hidden';
                 // xóa state để tránh mở lại khi reload/back
                 navigate(location.pathname, { replace: true, state: {} });
             }
@@ -84,13 +83,11 @@ export default function Performances() {
     // Xử lý mở popup
     const handleOpenPopup = (performance) => {
         setSelectedPerformance(performance);
-        document.body.style.overflow = 'hidden';
     };
 
     // Xử lý đóng popup
     const handleClosePopup = () => {
         setSelectedPerformance(null);
-        document.body.style.overflow = 'unset';
     };
 
     // Component section với Tailwind

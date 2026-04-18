@@ -1,4 +1,4 @@
-import React from 'react';
+import React, { useEffect } from 'react';
 import { XMarkIcon } from '@heroicons/react/24/outline';
 import PerformancePoster from './PerformancePoster';
 import PerformanceInfo from './PerformanceInfo';
@@ -9,18 +9,28 @@ import PerformanceTechTeam from './PerformanceTechTeam';
 import PerformanceActions from './PerformanceActions';
 
 export default function PerformancePopup({ performance, onClose }) {
+    useEffect(() => {
+        // Lock body scroll when popup is open
+        document.body.style.overflow = 'hidden';
+        
+        // Cleanup function to unlock scroll when popup is unmounted
+        return () => {
+            document.body.style.overflow = 'unset';
+        };
+    }, []);
+
     if (!performance) return null;
 
     return (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
+        <div className="fixed inset-0 z-[110] overflow-y-auto">
             {/* Overlay */}
             <div 
-                className="fixed inset-0 bg-black/50 backdrop-blur-sm"
+                className="fixed inset-0 bg-black/60 backdrop-blur-sm"
                 onClick={onClose}
             />
             
             {/* Popup content */}
-            <div className="relative min-h-screen flex items-center justify-center p-4">
+            <div className="relative min-h-screen flex items-start justify-center p-4 pt-24 pb-12">
                 <div className="relative bg-white rounded-3xl max-w-6xl w-full max-h-[90vh] overflow-y-auto shadow-2xl">
                     {/* Close button */}
                     <button

@@ -1,7 +1,7 @@
 import requests
 
 def test_login():
-    url = "http://localhost:5000/api/login"
+    url = "http://192.168.1.13:5000/api/login"
     payload = {
         "email": "test@example.com",
         "password": "password123"
