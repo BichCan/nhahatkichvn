@@ -245,9 +245,9 @@ def hold_seat():
         session_uid = str(uuid.uuid4())
         
         c.execute('''
-            INSERT INTO bookings (user_id, performance_id, seat_id, seat_row, seat_number, show_date, show_time, price, payment_method, order_code, status, hold_start_time, hold_expiry_time, session_id)
-            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'holding', ?, ?, ?)
-        ''', (user_id, performance_id, seat_id, seat_id[0], seat_id[1:], date, time_str, 0, 'Hold', '', now_str, expiry_str, session_uid))
+            INSERT INTO bookings (user_id, performance_id, seat_id, seat_row, seat_number, show_date, show_time, price, payment_method, order_code, order_id, status, hold_start_time, hold_expiry_time, session_id)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 'holding', ?, ?, ?)
+        ''', (user_id, performance_id, seat_id, seat_id[0], seat_id[1:], date, time_str, 0, 'Hold', 'pending', 'pending', now_str, expiry_str, session_uid))
         booking_id = c.lastrowid
         
         c.execute('''
@@ -294,6 +294,78 @@ def cancel_hold():
         conn.commit()
         broadcast_seat_update(performance_id, date, time_str)
         return jsonify({"success": True})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/bookings', methods=['POST'])
+def create_order():
+    data = request.json
+    bookings = data.get('bookings')
+    if not bookings:
+        return jsonify({"success": False, "message": "Không có thông tin đặt vé"}), 400
+        
+    user_id = session.get('user_id')
+    if not user_id:
+        return jsonify({"success": False, "message": "Bạn chưa đăng nhập"}), 401
+        
+    try:
+        conn = get_db_connection()
+        c = conn.cursor()
+        now = datetime.now()
+        now_str = now.strftime('%Y-%m-%d %H:%M:%S')
+        
+        # Calculate total with 8% VAT
+        subtotal = sum(float(b.get('price', 0)) for b in bookings)
+        total_with_vat = round(subtotal * 1.08, 0)
+        
+        payment_method = data.get('payment_method', 'cash')
+        payment_status = 'paid' if payment_method in ['vnpay', 'shopeepay', 'bank'] else 'pending'
+        
+        order_id = f"ORD-{now.strftime('%Y%m%d')}-{str(uuid.uuid4())[:8].upper()}"
+        
+        # 1. Create entry in orders table
+        c.execute('''
+            INSERT INTO orders (order_id, user_id, total_amount, payment_status, payment_method, payment_date, created_at, updated_at)
+            VALUES (?, ?, ?, ?, ?, ?, ?, ?)
+        ''', (order_id, user_id, total_with_vat, payment_status, payment_method, now_str if payment_status == 'paid' else None, now_str, now_str))
+        
+        for b in bookings:
+            # 2. Update corresponding bookings records
+            c.execute('''
+                UPDATE bookings 
+                SET order_id = ?, order_code = ?, status = 'converted'
+                WHERE user_id = ? AND performance_id = ? AND seat_id = ? AND show_date = ? AND show_time = ?
+            ''', (order_id, order_id, user_id, b['performance_id'], b['seat_id'], b['show_date'], b['show_time']))
+            
+            # 3. Update related tickets records
+            db_start_time = f"{b['show_date']} {b['show_time']}:00"
+            c.execute("SELECT id FROM plays WHERE performance_id = ? AND start_time = ?", (b['performance_id'], db_start_time))
+            play_row = c.fetchone()
+            if play_row:
+                ticket_status = 'paid' if payment_status == 'paid' else 'booked'
+                c.execute('''
+                    UPDATE tickets 
+                    SET status = ?, order_id = ?, price = ?, updated_at = ?
+                    WHERE play_id = ? AND seat_id = ?
+                ''', (ticket_status, order_id, b.get('price'), now_str, play_row['id'], b['seat_id']))
+                
+        conn.commit()
+        
+        # Broadcast updates for affected performances
+        # Use a set to avoid redundant broadcasts for the same performance
+        performances = set((b['performance_id'], b['show_date'], b['show_time']) for b in bookings)
+        for pid, d, t in performances:
+            broadcast_seat_update(pid, d, t)
+            
+        return jsonify({
+            "success": True, 
+            "order_id": order_id, 
+            "message": "Đặt vé thành công",
+            "total_amount": total_with_vat
+        })
     except Exception as e:
         conn.rollback()
         return jsonify({"success": False, "message": str(e)}), 500

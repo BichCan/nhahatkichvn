@@ -1,18 +1,15 @@
-import sqlite3
-import json
+import sqlite3, os
 
-try:
-    conn = sqlite3.connect('c:/DEAN/nhahatkichvn/nhahatkichvn.db')
-    cursor = conn.cursor()
-    tables = [t[0] for t in cursor.execute("SELECT name FROM sqlite_master WHERE type='table'").fetchall()]
-    
-    schema = {}
-    for table in tables:
-        schema[table] = cursor.execute(f"SELECT sql FROM sqlite_master WHERE name='{table}'").fetchone()[0]
-        
-    with open('c:/DEAN/nhahatkichvn/schema.json', 'w') as f:
-        json.dump(schema, f, indent=4)
-        
-    print("Schema exported successfully")
-except Exception as e:
-    print(f"Error: {e}")
+def check_schema():
+    db_path = 'nhahatkichvn.db'
+    if not os.path.exists(db_path):
+        print("DB not found")
+        return
+    conn = sqlite3.connect(db_path)
+    cur = conn.cursor()
+    cur.execute("SELECT sql FROM sqlite_master WHERE type='table' AND name='bookings'")
+    print(cur.fetchone()[0])
+    conn.close()
+
+if __name__ == '__main__':
+    check_schema()
