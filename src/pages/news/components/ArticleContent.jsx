@@ -51,6 +51,10 @@ export default function ArticleContent({ content }) {
         }
     };
 
+    if (!Array.isArray(content)) {
+        return null;
+    }
+
     return (
         <div className="article-content mb-12">
             {content.map((block, index) => renderContent(block, index))}

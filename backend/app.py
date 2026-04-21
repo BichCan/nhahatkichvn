@@ -16,7 +16,21 @@ load_dotenv()
 
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'nhahatkichvn_secret_key')
-CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://192.168.1.13:3000", "http://localhost:5000", "http://127.0.0.1:5000"])
+# CORS configuration - Allow all common development origins
+CORS(app, supports_credentials=True, origins=[
+    "http://localhost:3000",
+    "http://127.0.0.1:3000",
+    "http://localhost:5000",
+    "http://127.0.0.1:5000",
+    "http://192.168.1.13:3000"
+], allow_headers=["Content-Type", "Authorization", "X-Admin-ID"], methods=["GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"])
+
+app.config.update(
+    SESSION_COOKIE_SAMESITE='Lax',
+    SESSION_COOKIE_SECURE=False,
+    SESSION_COOKIE_HTTPONLY=True,
+    PERMANENT_SESSION_LIFETIME=timedelta(days=7)
+)
 
 # Register Blueprints
 app.register_blueprint(admin_bp, url_prefix='/api/admin')
@@ -391,6 +405,7 @@ def login():
     if user:
         session.permanent = True
         session['user_id'] = user['id']
+        session['user_role'] = user['role']
         session['user_name'] = user['full_name']
         session['user_email'] = user['email']
         session['user_phone'] = user['phone']
