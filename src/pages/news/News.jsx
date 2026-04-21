@@ -12,15 +12,19 @@ export default function NewsPage() {
     }, []);
 
     return (
-        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-16 md:py-24">
             {/* Header */}
-            <div className="mb-8 md:mb-12">
-                <h1 className="text-3xl md:text-4xl font-bold text-[#1a1a1a] mb-2">
-                    TIN TỨC & SỰ KIỆN
+            <div className="max-w-3xl mb-16 md:mb-24">
+                <div className="flex items-center gap-3 mb-4">
+                    <div className="h-[1px] w-12 bg-[#8B0000]"></div>
+                    <span className="text-[10px] font-black uppercase tracking-[0.3em] text-[#8B0000]">Phòng truyền thông</span>
+                </div>
+                <h1 className="font-['Newsreader'] text-5xl md:text-7xl font-bold text-slate-950 leading-[0.95] tracking-tight mb-8">
+                    Tin tức & <br/>
+                    <span className="text-[#8B0000] italic">Sự kiện</span>
                 </h1>
-                <div className="w-20 h-1 bg-[#8B0000] rounded-full"></div>
-                <p className="text-gray-600 mt-4">
-                    Cập nhật những tin tức mới nhất về các vở diễn và hoạt động của nhà hát
+                <p className="text-xl text-slate-500 font-light leading-relaxed font-['Roboto'] border-l-2 border-slate-100 pl-8">
+                    Nơi lưu giữ những khoảnh khắc, câu chuyện hậu trường và thông báo quan trọng nhất từ Nhà hát kịch Việt Nam.
                 </p>
             </div>
 

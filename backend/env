@@ -1,0 +1,10 @@
+# Redis Configuration
+REDIS_HOST=localhost
+REDIS_PORT=6379
+REDIS_DB=0
+
+# Application Configuration
+SECRET_KEY=nhahatkichvn_secret_key
+HOLD_TIMEOUT=600
+
+REACT_APP_API_URL=http://192.168.1.13:3000

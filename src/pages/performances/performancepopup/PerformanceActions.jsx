@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { CalendarIcon } from '@heroicons/react/24/outline';
 import { useNavigate } from 'react-router-dom';
+import API_URL from '../../../config/api';
 
 export default function PerformanceActions({ performance }) {
     const navigate = useNavigate();

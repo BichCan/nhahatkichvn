@@ -1,15 +1,31 @@
-import React, { useState } from 'react';
-import { FaTimes, FaImage, FaHeading, FaAlignLeft, FaPlus } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaTimes, FaImage, FaHeading, FaAlignLeft, FaPlus, FaEdit } from 'react-icons/fa';
 import API_URL from '../../../config/api';
 
-const AddNewsModal = ({ isOpen, onClose, onRefresh }) => {
+const AddNewsModal = ({ isOpen, onClose, onRefresh, initialData }) => {
     const [formData, setFormData] = useState({
         title: '',
         content: '',
         image_url: ''
     });
+
     const [loading, setLoading] = useState(false);
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        if (isOpen) {
+            if (initialData) {
+                setFormData({
+                    title: initialData.title || '',
+                    content: initialData.content || '',
+                    image_url: initialData.image_url || ''
+                });
+            } else {
+                setFormData({ title: '', content: '', image_url: '' });
+            }
+            setMessage('');
+        }
+    }, [isOpen, initialData]);
 
     if (!isOpen) return null;
 
@@ -18,19 +34,36 @@ const AddNewsModal = ({ isOpen, onClose, onRefresh }) => {
         setLoading(true);
         setMessage('');
 
+        const userStr = localStorage.getItem('user');
+        let admin_id = null;
+        if (userStr) {
+            try {
+                admin_id = JSON.parse(userStr).id;
+            } catch (e) {}
+        }
+
+        const method = initialData ? 'PUT' : 'POST';
+        const url = initialData 
+            ? `${API_URL}/api/admin/news/${initialData.id}` 
+            : `${API_URL}/api/admin/news`;
+
         try {
-            const response = await fetch(`${API_URL}/api/admin/news`, {
-                method: 'POST',
+            const response = await fetch(url, {
+                method: method,
                 headers: {
                     'Content-Type': 'application/json'
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify({
+                    ...formData,
+                    admin_id: admin_id // Fallback for backend
+                }),
+                credentials: 'include'
             });
 
             const data = await response.json();
             if (data.success) {
-                setMessage('Thêm tin tức thành công!');
-                setFormData({ title: '', content: '', image_url: '' });
+                setMessage(initialData ? 'Cập nhật thành công!' : 'Thêm tin tức thành công!');
+                if (!initialData) setFormData({ title: '', content: '', image_url: '' });
                 setTimeout(() => {
                     onRefresh();
                     onClose();
@@ -46,83 +79,91 @@ const AddNewsModal = ({ isOpen, onClose, onRefresh }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            {/* Backdrop */}
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+        <div className="fixed inset-0 z-[300] flex items-center justify-center p-4">
+            <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-sm" onClick={onClose}></div>
             
-            {/* Modal Content */}
-            <div className="relative z-10 w-full max-w-2xl bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <FaPlus className="text-red-600" /> Thêm tin tức mới
+            <div className="relative z-10 w-full max-w-2xl bg-white border border-slate-200 rounded-3xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
+                <div className="p-6 border-b border-slate-100 flex items-center justify-between bg-slate-50/50">
+                    <h3 className="text-xl font-black text-slate-950 flex items-center gap-3">
+                        {initialData ? <div className="p-2 bg-blue-100 rounded-lg text-blue-600"><FaEdit /></div> : <div className="p-2 bg-red-100 rounded-lg text-red-600"><FaPlus /></div>} 
+                        {initialData ? 'CHỈNH SỬA TIN TỨC' : 'THÊM TIN TỨC MỚI'}
                     </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <FaTimes />
+                    <button onClick={onClose} className="text-slate-400 hover:text-slate-900 p-2 rounded-xl hover:bg-slate-100 transition-all">
+                        <FaTimes size={18} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-6">
+                <form onSubmit={handleSubmit} className="p-8">
                     {message && (
-                        <div className={`p-4 rounded-lg text-sm text-center ${message.includes('thành công') ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                        <div className={`mb-6 p-4 rounded-xl text-sm font-bold text-center animate-in slide-in-from-top-2 duration-300 ${message.includes('thành công') ? 'bg-green-50 text-green-600 border border-green-100' : 'bg-red-50 text-red-600 border border-red-100'}`}>
                             {message}
                         </div>
                     )}
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <FaHeading /> Tiêu đề
-                        </label>
-                        <input
-                            type="text"
-                            required
-                            value={formData.title}
-                            onChange={(e) => setFormData({ ...formData, title: e.target.value })}
-                            placeholder="Nhập tiêu đề tin tức..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
-                        />
+                    <div className="space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <FaHeading className="text-red-500" /> Tiêu đề tin tức
+                            </label>
+                            <input
+                                type="text"
+                                required
+                                value={formData.title}
+                                onChange={(e) => setFormData({ ...formData, title: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/5 transition-all placeholder:text-slate-300 font-bold"
+                                placeholder="Nhập tiêu đề ấn tượng cho bài viết..."
+                            />
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <FaAlignLeft className="text-red-500" /> Nội dung chi tiết
+                            </label>
+                            <textarea
+                                required
+                                rows="6"
+                                value={formData.content}
+                                onChange={(e) => setFormData({ ...formData, content: e.target.value })}
+                                className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/5 transition-all placeholder:text-slate-300 font-semibold leading-relaxed resize-none"
+                                placeholder="Viết nội dung bài viết tại đây..."
+                            ></textarea>
+                        </div>
+
+                        <div className="space-y-2">
+                            <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
+                                <FaImage className="text-red-500" /> Đường dẫn ảnh bìa (URL)
+                            </label>
+                            <div className="relative group">
+                                <input
+                                    type="text"
+                                    value={formData.image_url}
+                                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
+                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/5 transition-all placeholder:text-slate-300 font-medium"
+                                    placeholder="https://example.com/image.jpg"
+                                />
+                            </div>
+                        </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <FaAlignLeft /> Nội dung
-                        </label>
-                        <textarea
-                            required
-                            rows="6"
-                            value={formData.content}
-                            onChange={(e) => setFormData({ ...formData, content: e.target.value })}
-                            placeholder="Nhập nội dung tin tức..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors resize-none"
-                        ></textarea>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <FaImage /> Đường dẫn ảnh (Image URL)
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.image_url}
-                            onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                            placeholder="https://example.com/image.jpg"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
-                        />
-                    </div>
-
-                    <div className="pt-4 flex gap-4">
+                    <div className="mt-10 flex gap-4">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 border border-white/10 rounded-xl text-white font-semibold hover:bg-white/5 transition-colors"
+                            className="flex-1 py-4 px-6 border border-slate-200 rounded-2xl text-slate-600 font-bold hover:bg-slate-50 transition-all active:scale-95"
                         >
                             Hủy bỏ
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-[2] py-3 bg-red-600 rounded-xl text-white font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+                            className={`flex-[2] py-4 px-6 rounded-2xl text-white font-black tracking-wide transition-all disabled:opacity-50 shadow-lg active:scale-95 ${initialData ? 'bg-blue-600 hover:bg-blue-700 shadow-blue-600/20' : 'bg-red-600 hover:bg-red-700 shadow-red-600/20'}`}
                         >
-                            {loading ? 'Đang xử lý...' : 'Lưu tin tức'}
+                            {loading ? (
+                                <div className="flex items-center justify-center gap-2">
+                                    <div className="w-4 h-4 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                    <span>ĐANG XỬ LÝ...</span>
+                                </div>
+                            ) : (initialData ? 'LƯU THAY ĐỔI' : 'XUẤT BẢN TIN TỨC')}
                         </button>
                     </div>
                 </form>
