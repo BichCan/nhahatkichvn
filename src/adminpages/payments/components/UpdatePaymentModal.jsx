@@ -70,10 +70,10 @@ const UpdatePaymentModal = ({ isOpen, onClose, payment, onSuccess }) => {
                         <IoClose size={20} />
                     </button>
                     <div className="flex items-center gap-3 mb-4">
-                        <FaCheckCircle className="text-white/40 text-xl" />
-                        <span className="text-[11px] font-black uppercase tracking-[0.3em] opacity-60">Xác nhận thanh toán</span>
+                        <FaCheckCircle className="text-white/40 text-lg" />
+                        <span className="text-[8px] font-black uppercase tracking-[0.3em] opacity-60">Xác nhận thanh toán</span>
                     </div>
-                    <h2 className="text-3xl font-black tracking-tight leading-none">XÁC NHẬN GIAO DỊCH</h2>
+                    <h2 className="text-xl font-black tracking-tight leading-none">XÁC NHẬN GIAO DỊCH</h2>
                 </div>
 
                 {/* Content */}
@@ -85,8 +85,8 @@ const UpdatePaymentModal = ({ isOpen, onClose, payment, onSuccess }) => {
                                 <FaUser />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Khách hàng</p>
-                                <p className="font-bold text-gray-900 text-lg leading-tight">{payment.customer_name}</p>
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Khách hàng</p>
+                                <p className="font-bold text-gray-900 text-sm leading-tight">{payment.customer_name}</p>
                                 <p className="text-sm text-gray-400 font-medium">{payment.customer_phone}</p>
                             </div>
                         </div>
@@ -96,7 +96,7 @@ const UpdatePaymentModal = ({ isOpen, onClose, payment, onSuccess }) => {
                                 <FaTheaterMasks />
                             </div>
                             <div>
-                                <p className="text-[10px] font-black text-gray-400 uppercase tracking-widest mb-1">Suất diễn</p>
+                                <p className="text-[8px] font-black text-gray-400 uppercase tracking-widest mb-1">Suất diễn</p>
                                 <p className="font-bold text-gray-800 text-sm leading-tight">{payment.performance_title}</p>
                             </div>
                         </div>
@@ -107,7 +107,7 @@ const UpdatePaymentModal = ({ isOpen, onClose, payment, onSuccess }) => {
                                     <FaMoneyBillWave />
                                     <span className="text-xs font-black uppercase tracking-widest">Tổng tiền cần thu</span>
                                 </div>
-                                <span className="text-3xl font-black text-gray-900 tracking-tighter">
+                                <span className="text-lg font-black text-gray-900 tracking-tighter">
                                     {formatCurrency(payment.total_amount)}
                                 </span>
                              </div>
@@ -124,14 +124,14 @@ const UpdatePaymentModal = ({ isOpen, onClose, payment, onSuccess }) => {
                     <div className="flex flex-col sm:flex-row gap-4 pt-4">
                         <button
                             onClick={onClose}
-                            className="flex-1 px-8 py-5 border border-gray-100 rounded-2xl text-gray-400 text-sm font-black uppercase tracking-[0.2em] hover:bg-gray-50 transition-all"
+                            className="flex-1 px-4 py-3 border border-gray-100 rounded-2xl text-gray-400 text-sm font-black uppercase tracking-[0.1em] hover:bg-gray-50 transition-all"
                         >
                             Hủy bỏ
                         </button>
                         <button
                             onClick={handleConfirm}
                             disabled={loading}
-                            className="flex-[2] px-8 py-5 bg-[#700c1e] text-white rounded-2xl text-sm font-black uppercase tracking-[0.2em] shadow-xl shadow-[#700c1e]/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
+                            className="flex-[2] px-4 py-3 bg-[#700c1e] text-white rounded-2xl text-sm font-black uppercase tracking-[0.1em] shadow-xl shadow-[#700c1e]/20 hover:scale-[1.02] active:scale-[0.98] transition-all disabled:opacity-50 disabled:hover:scale-100"
                         >
                             {loading ? (
                                 <div className="flex items-center justify-center gap-3">
