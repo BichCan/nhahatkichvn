@@ -1,7 +1,20 @@
 from flask import Blueprint, jsonify, request, session
 from db_utils import get_db_connection
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__)
+
+# Configure Upload Folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'public', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @admin_bp.route('/login', methods=['POST'])
 def admin_login():
@@ -69,6 +82,30 @@ def verify_admin_status(request_data=None):
             conn.close()
             
     return None, (jsonify({"success": False, "message": "Vui lòng đăng nhập với quyền admin"}), 401)
+
+@admin_bp.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "Không tìm thấy file"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "message": "Chưa chọn file"}), 400
+    
+    if file and allowed_file(file.filename):
+        # Generate unique filename
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        # Return the public URL
+        return jsonify({
+            "success": True, 
+            "url": f"/uploads/{filename}"
+        })
+    
+    return jsonify({"success": False, "message": "Định dạng file không được hỗ trợ"}), 400
 
 # News Management Routes
 @admin_bp.route('/news', methods=['POST'])
@@ -186,6 +223,53 @@ def create_artist():
         ''', (name, bio, role_type, avatar_url))
         conn.commit()
         return jsonify({"success": True, "message": "Thêm nghệ sĩ thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/artists/<int:artist_id>', methods=['PUT'])
+def update_artist(artist_id):
+    data = request.json
+    admin_id, error = verify_admin_status(data)
+    if error: return error
+    
+    name = data.get('name')
+    bio = data.get('bio')
+    role_type = data.get('role_type')
+    avatar_url = data.get('avatar_url')
+    
+    if not name:
+        return jsonify({"success": False, "message": "Tên nghệ sĩ không được để trống"}), 400
+        
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('''
+            UPDATE artists 
+            SET name = ?, bio = ?, role_type = ?, avatar_url = ?
+            WHERE id = ?
+        ''', (name, bio, role_type, avatar_url, artist_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Cập nhật nghệ sĩ thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/artists/<int:artist_id>', methods=['DELETE'])
+def delete_artist(artist_id):
+    # Fallback to query params or headers for DELETE as body is often empty
+    admin_id_fallback = request.args.get('admin_id') or request.headers.get('X-Admin-ID')
+    admin_id, error = verify_admin_status({'admin_id': admin_id_fallback})
+    if error: return error
+         
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('DELETE FROM artists WHERE id = ?', (artist_id,))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đã xóa nghệ sĩ"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:

@@ -10,6 +10,7 @@ const AddNewsModal = ({ isOpen, onClose, onRefresh, initialData }) => {
     });
 
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
 
     useEffect(() => {
@@ -26,6 +27,36 @@ const AddNewsModal = ({ isOpen, onClose, onRefresh, initialData }) => {
             setMessage('');
         }
     }, [isOpen, initialData]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        setMessage('');
+
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        try {
+            const response = await fetch(`${API_URL}/api/admin/upload`, {
+                method: 'POST',
+                body: formDataUpload
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setFormData(prev => ({ ...prev, image_url: data.url }));
+                setMessage('Tải ảnh lên thành công!');
+            } else {
+                setMessage(data.message || 'Lỗi khi tải ảnh.');
+            }
+        } catch (error) {
+            setMessage('Lỗi kết nối máy chủ khi tải ảnh.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -131,15 +162,34 @@ const AddNewsModal = ({ isOpen, onClose, onRefresh, initialData }) => {
 
                         <div className="space-y-2">
                             <label className="text-[11px] font-black text-slate-500 uppercase tracking-widest flex items-center gap-2">
-                                <FaImage className="text-red-500" /> Đường dẫn ảnh bìa (URL)
+                                <FaImage className="text-red-500" /> Ảnh bìa tin tức
                             </label>
-                            <div className="relative group">
+                            <div className="relative group overflow-hidden bg-slate-50 border border-slate-200 rounded-xl transition-all hover:border-red-600/30">
+                                <div className="aspect-[21/9] flex flex-col items-center justify-center p-4">
+                                    {uploading ? (
+                                        <div className="flex flex-col items-center gap-2">
+                                            <div className="w-8 h-8 border-2 border-slate-200 border-t-red-600 rounded-full animate-spin"></div>
+                                            <span className="text-[10px] font-black text-slate-400 uppercase tracking-widest">ĐANG TẢI...</span>
+                                        </div>
+                                    ) : formData.image_url ? (
+                                        <div className="relative w-full h-full group/preview">
+                                            <img src={formData.image_url} alt="Cover" className="w-full h-full object-cover rounded-lg" />
+                                            <div className="absolute inset-0 bg-slate-900/40 opacity-0 group-hover/preview:opacity-100 flex items-center justify-center transition-all rounded-lg">
+                                                <span className="text-white text-[10px] font-black uppercase tracking-widest bg-red-600/80 px-3 py-1.5 rounded-full">THAY ĐỔI ẢNH</span>
+                                            </div>
+                                        </div>
+                                    ) : (
+                                        <div className="flex flex-col items-center gap-2 text-slate-300 group-hover:text-red-600/50 transition-colors">
+                                            <FaImage size={32} />
+                                            <span className="text-[10px] font-black uppercase tracking-widest">CHỌN ẢNH BÌA</span>
+                                        </div>
+                                    )}
+                                </div>
                                 <input
-                                    type="text"
-                                    value={formData.image_url}
-                                    onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-                                    className="w-full bg-slate-50 border border-slate-200 rounded-xl px-4 py-3.5 text-slate-900 focus:outline-none focus:border-red-600/50 focus:ring-4 focus:ring-red-600/5 transition-all placeholder:text-slate-300 font-medium"
-                                    placeholder="https://example.com/image.jpg"
+                                    type="file"
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
                                 />
                             </div>
                         </div>
