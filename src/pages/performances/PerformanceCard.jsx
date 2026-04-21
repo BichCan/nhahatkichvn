@@ -15,32 +15,24 @@ export default function PerformanceCardRating({ performance }) {
     // Kiểm tra nếu không có dữ liệu
     if (!performance) return null;
 
-    // Tạo rating ngẫu nhiên (trong thực tế sẽ lấy từ API/database)
-    const rating = performance.rating || (Math.random() * 2 + 3).toFixed(1); // Random từ 3.0 - 5.0
-    const ratingCount = performance.ratingCount || Math.floor(Math.random() * 1000) + 100;
+    // Lấy rating thực từ DB (backend đã tính sẵn avg từ bảng ratings)
+    const rating = performance.rating > 0 ? Number(performance.rating).toFixed(1) : null;
+    const ratingCount = performance.ratingCount || 0;
 
     // Hàm hiển thị sao
-    const renderStars = () => {
+    const renderStars = (score) => {
+        if (!score) return null;
         const stars = [];
-        const fullStars = Math.floor(rating);
-        const hasHalfStar = rating - fullStars >= 0.5;
+        const fullStars = Math.floor(score);
+        const hasHalfStar = score - fullStars >= 0.5;
         
         for (let i = 1; i <= 5; i++) {
             if (i <= fullStars) {
-                // Sao đầy
-                stars.push(
-                    <span key={i} className="text-yellow-400 text-sm">★</span>
-                );
+                stars.push(<span key={i} className="text-yellow-400 text-sm">★</span>);
             } else if (i === fullStars + 1 && hasHalfStar) {
-                // Nửa sao
-                stars.push(
-                    <span key={i} className="text-yellow-400 text-sm">⯨</span>
-                );
+                stars.push(<span key={i} className="text-yellow-400 text-sm">⯨</span>);
             } else {
-                // Sao rỗng
-                stars.push(
-                    <span key={i} className="text-gray-300 text-sm">★</span>
-                );
+                stars.push(<span key={i} className="text-gray-300 text-sm">★</span>);
             }
         }
         return stars;
@@ -77,15 +69,21 @@ export default function PerformanceCardRating({ performance }) {
                     <span className="truncate">{performance.type}</span>
                 </div>
 
-                {/* Rating Section - Căn giữa */}
+                {/* Rating Section */}
                 <div className="mt-auto w-full">
-                    <div className="flex items-center justify-center gap-1">
-                        {renderStars()}
-                        <span className="text-xs font-bold text-gray-700 ml-1">{rating}</span>
-                    </div>
-                    <p className="text-[10px] text-gray-500 mt-0.5">
-                        {ratingCount.toLocaleString()} lượt đánh giá
-                    </p>
+                    {rating ? (
+                        <>
+                            <div className="flex items-center justify-center gap-1">
+                                {renderStars(rating)}
+                                <span className="text-xs font-bold text-gray-700 ml-1">{rating}</span>
+                            </div>
+                            <p className="text-[10px] text-gray-500 mt-0.5">
+                                {ratingCount > 0 ? `${ratingCount.toLocaleString()} lượt đánh giá` : ''}
+                            </p>
+                        </>
+                    ) : (
+                        <p className="text-[10px] text-gray-400 italic text-center">Chưa có đánh giá</p>
+                    )}
                 </div>
             </div>
         </div>

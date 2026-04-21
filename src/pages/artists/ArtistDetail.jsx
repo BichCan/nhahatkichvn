@@ -1,10 +1,34 @@
-import React from 'react';
+import React, { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import artistsData from '../../data/ArtistsData';
 
 export default function ArtistDetail() {
     const { artistId } = useParams();
-    const artist = artistsData.find(a => a.id === parseInt(artistId));
+    const [artist, setArtist] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:5000/api/artists')
+            .then(res => res.json())
+            .then(data => {
+                const found = data.find(a => a.id === parseInt(artistId));
+                setArtist(found);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error("Error fetching artists:", err);
+                setLoading(false);
+            });
+    }, [artistId]);
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-700">Đang tải thông tin...</h2>
+                </div>
+            </div>
+        );
+    }
 
     if (!artist) {
         return (

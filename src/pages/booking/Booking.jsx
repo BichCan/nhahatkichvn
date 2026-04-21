@@ -1,6 +1,4 @@
 import React, { useState, useEffect } from 'react';
-import performancesdata from '../../data/PerformancesData';
-import playsData from '../../data/PlaysData';
 import PerformanceCard from './components/Performance';
 
 export default function Performances() {
@@ -8,39 +6,53 @@ export default function Performances() {
         ongoing: [],
         upcoming: []
     });
+    const [allPlaySchedules, setAllPlaySchedules] = useState([]);
     
     useEffect(() => {
-        // Phân loại vở diễn
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const ongoing = [];
-        const upcoming = [];
-        
-        performancesdata.forEach(performance => {
-            const playSchedules = playsData.filter(s => s.p_id === performance.id);
+        Promise.all([
+            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/plays').then(r => r.json())
+        ])
+        .then(([perfData, playSchedulesList]) => {
+            setAllPlaySchedules(playSchedulesList);
+            // Phân loại vở diễn
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
             
-            const todaySchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate.getTime() === today.getTime();
-            });
+            const ongoing = [];
+            const upcoming = [];
             
-            const upcomingSchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate > today;
-            });
-            
-            if (todaySchedules.length > 0) {
-                ongoing.push(performance);
-            } else if (upcomingSchedules.length > 0) {
-                upcoming.push(performance);
-            }
-            // Bỏ qua các vở đã diễn (không push vào đâu cả)
-        });
-        
-        setClassifiedPlays({ ongoing, upcoming });
+            perfData.forEach(performance => {
+                const playSchedules = playSchedulesList.filter(s => s.p_id === performance.id);
+                    
+                    const todaySchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate.getTime() === today.getTime()
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    
+                    const upcomingSchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate > today
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    
+                    if (todaySchedules.length > 0) {
+                        ongoing.push(performance);
+                    } else if (upcomingSchedules.length > 0) {
+                        upcoming.push(performance);
+                    } else if (performance.status === 'active') {
+                        // Nếu performance đang active nhưng chưa có lịch cụ thể -> xếp vào sắp diễn
+                        upcoming.push(performance);
+                    }
+                });
+
+                
+                setClassifiedPlays({ ongoing, upcoming });
+            })
+            .catch(err => console.error("Error fetching performances:", err));
     }, []);
     
     // Component section với Tailwind
@@ -95,7 +107,8 @@ export default function Performances() {
                         {plays.map((performance) => (
                             <PerformanceCard 
                                 key={performance.id} 
-                                performance={performance} 
+                                performance={performance}
+                                playSchedules={allPlaySchedules}
                             />
                         ))}
                     </div>

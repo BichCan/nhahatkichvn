@@ -1,7 +1,16 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 
-export default function BookingFooter({ selectedSeats, total, performanceId, selectedDate, selectedTime }) {
+export default function BookingFooter({ 
+    selectedSeats, 
+    total, 
+    performanceId, 
+    selectedDate, 
+    selectedTime,
+    timeLeft,
+    formatTimer,
+    timerActive 
+}) {
     const navigate = useNavigate();
 
     const handleContinue = () => {
@@ -10,7 +19,8 @@ export default function BookingFooter({ selectedSeats, total, performanceId, sel
             state: {
                 selectedSeats,
                 selectedDate,
-                selectedTime
+                selectedTime,
+                holdExpiresAt: timerActive ? new Date(Date.now() + timeLeft * 1000).toISOString() : null
             }
         });
       }else{
@@ -21,9 +31,17 @@ export default function BookingFooter({ selectedSeats, total, performanceId, sel
     return (
         <footer className="fixed bottom-0 left-0 right-0 bg-white border-t border-slate-200 p-4 pb-8 flex items-center justify-between shadow-[0_-4px_10px_rgba(0,0,0,0.05)] z-50">
             <div className="flex flex-col">
-                <span className="text-xs text-slate-500">
-                    Tạm tính ({selectedSeats.length} ghế)
-                </span>
+                <div className="flex items-center gap-2 mb-1">
+                    <span className="text-xs text-slate-500">
+                        Tạm tính ({selectedSeats.length} ghế)
+                    </span>
+                    {timerActive && (
+                        <div className="flex items-center gap-1 px-2 py-0.5 bg-red-50 text-theater-red rounded-full border border-red-100 animate-pulse">
+                            <span className="text-[10px] font-bold uppercase">Hết hạn trong:</span>
+                            <span className="text-xs font-mono font-bold">{formatTimer(timeLeft)}</span>
+                        </div>
+                    )}
+                </div>
                 <span className="text-xl font-bold text-theater-red">
                     {total.toLocaleString()}đ
                 </span>

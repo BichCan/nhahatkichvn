@@ -1,8 +1,16 @@
-import React from 'react';
-import artistsData from '../../data/ArtistsData';
+import React, { useState, useEffect } from 'react';
 import ArtistCard from './ArtistCard';
 
 export default function ArtistsPage() {
+    const [artistsData, setArtistsData] = useState([]);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:5000/api/artists')
+            .then(res => res.json())
+            .then(data => setArtistsData(data))
+            .catch(err => console.error("Error fetching artists:", err));
+    }, []);
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
             {/* Header */}

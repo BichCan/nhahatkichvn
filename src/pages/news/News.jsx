@@ -1,8 +1,16 @@
-import React from 'react';
-import newsData from '../../data/NewsData';
+import React, { useState, useEffect } from 'react';
 import NewsBox from './components/NewsBox';
 
 export default function NewsPage() {
+    const [newsData, setNewsData] = useState([]);
+
+    useEffect(() => {
+        fetch('http://127.0.0.1:5000/api/news')
+            .then(res => res.json())
+            .then(data => setNewsData(data))
+            .catch(err => console.error("Error fetching news:", err));
+    }, []);
+
     return (
         <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8 md:py-12">
             {/* Header */}

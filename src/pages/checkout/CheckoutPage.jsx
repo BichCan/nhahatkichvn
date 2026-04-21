@@ -1,35 +1,15 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useLocation, useParams, useNavigate } from 'react-router-dom';
-import performancesdata from '../../data/PerformancesData';
+import API_URL from '../../config/api';
 import CardPay from './components/CardPay';
 import CardDrama from './components/CardDrama';
 import PopupCash from './components/PopupCash';
-// Danh sách phương thức thanh toán
+
 const paymentMethods = [
-    {
-        id: 'vnpay',
-        name: 'VNPay',
-        description: 'Thanh toán qua ứng dụng ngân hàng quét mã QR',
-        icon: '💳'
-    },
-    {
-        id: 'shopeepay',
-        name: 'ShopeePay',
-        description: 'Sử dụng ví điện từ ShopeePay để thanh toán',
-        icon: '🛒'
-    },
-    {
-        id: 'bank',
-        name: 'Thẻ Ngân hàng',
-        description: 'Thanh toán qua thẻ ATM, Visa, Mastercard',
-        icon: '🏦'
-    },
-    {
-        id:"cash",
-        description:"Thanh toán bằng tiền mặt",
-        name:"Tiền mặt",
-        icon:"💰"
-    }
+    { id: 'vnpay', name: 'VNPay', description: 'Thanh toán qua ứng dụng ngân hàng quét mã QR', icon: '💳' },
+    { id: 'shopeepay', name: 'ShopeePay', description: 'Sử dụng ví điện tử ShopeePay để thanh toán', icon: '🛒' },
+    { id: 'bank', name: 'Thẻ Ngân hàng', description: 'Thanh toán qua thẻ ATM, Visa, Mastercard', icon: '🏦' },
+    { id: "cash", description: "Thanh toán bằng tiền mặt", name: "Tiền mặt", icon: "💰" }
 ];
 
 export default function CheckoutPage() {
@@ -41,33 +21,93 @@ export default function CheckoutPage() {
 
     const [selectedPayment, setSelectedPayment] = useState('bank');
     const [openPopup, setOpenPopup] = useState(false);
+    const [performance, setPerformance] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [user, setUser] = useState(() => {
+        const stored = localStorage.getItem('user');
+        return stored ? JSON.parse(stored) : null;
+    });
 
-    // Tìm thông tin vở diễn
-    const performance = performancesdata.find(p => p.id === parseInt(performanceId));
+    useEffect(() => {
+        if (!user) {
+            navigate('/login', { state: { from: location.pathname, message: "Vui lòng đăng nhập để tiếp tục đặt vé" } });
+            return;
+        }
+        
+        fetch(`${API_URL}/api/performances`)
+            .then(res => res.json())
+            .then(data => {
+                const perf = data.find(p => p.id === parseInt(performanceId));
+                setPerformance(perf);
+                setLoading(false);
+            })
+            .catch(err => {
+                console.error(err);
+                setLoading(false);
+            });
+    }, [performanceId]);
 
-    // Tính tổng tiền
     const total = selectedSeats.reduce((sum, seat) => sum + seat.price, 0);
 
-    // Xử lý thanh toán
     const handlePayment = () => {
-    setOpenPopup(true);
+        setOpenPopup(true);
     };
-    const dataLocal = typeof window !== 'undefined' ? JSON.parse(localStorage.getItem("ticket")) : null;
 
-    // Quay lại trang chọn ghế
     const handleGoBack = () => {
         navigate(`/dat-ve/${performanceId}`);
     };
-    const handleClosePopup= () =>{
-        localStorage.setItem("ticket",JSON.stringify({
-            performance,
-            selectedSeats,
-            selectedDate,
-            selectedTime,
-            total
-        }))
-        setOpenPopup(false)  
+
+    // Khi xác nhận thanh toán: gửi về backend sau đó điều hướng
+    const handleClosePopup = async () => {
+        const now = Date.now();
+
+        // Tạo dữ liệu vé chuẩn theo schema backend
+        const ticketDataList = selectedSeats.map((seat, idx) => {
+            const ticketCode = `NTK-${performance?.id || "00"}-${seat.row || ""}${seat.number || seat.id || ""}-${(now + idx).toString().slice(-7)}`;
+            return {
+                performance_id: performance.id,
+                seat_id: seat.id.toString(),
+                seat_row: seat.row,
+                seat_number: seat.number.toString(),
+                show_date: selectedDate,
+                show_time: selectedTime,
+                price: seat.price,
+                payment_method: selectedPayment,
+                order_code: ticketCode
+            };
+        });
+
+        try {
+            const response = await fetch(`${API_URL}/api/bookings`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({ bookings: ticketDataList })
+            });
+
+            const result = await response.json();
+            if (result.success) {
+                setOpenPopup(false);
+                navigate("/thong-tin-dat-ve");
+            } else {
+                alert(result.message || "Đặt vé thất bại");
+            }
+        } catch (error) {
+            console.error("Booking error:", error);
+            alert("Không thể kết nối đến máy chủ");
+        }
+    };
+
+    if (loading) {
+        return (
+            <div className="min-h-screen flex items-center justify-center">
+                <div className="text-center">
+                    <h2 className="text-xl font-bold text-gray-700">Đang tải thông tin...</h2>
+                </div>
+            </div>
+        );
     }
+
     if (!performance) {
         return (
             <div className="min-h-screen flex items-center justify-center">
@@ -126,7 +166,6 @@ export default function CheckoutPage() {
                             Hoàn tất bước cuối cùng để sở hữu tấm vé vàng.
                         </p>
 
-                        {/* Danh sách phương thức thanh toán */}
                         <div className="flex flex-col gap-3 mb-6">
                             {paymentMethods.map(method => (
                                 <CardPay
@@ -140,7 +179,21 @@ export default function CheckoutPage() {
                             ))}
                         </div>
 
-                        {/* Disclaimer */}
+                        {/* Tóm tắt vé sẽ được tạo */}
+                        <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-4">
+                            <p className="text-sm font-semibold text-amber-800 mb-2">
+                                📋 {selectedSeats.length} vé sẽ được tạo:
+                            </p>
+                            <div className="space-y-1">
+                                {selectedSeats.map((seat, i) => (
+                                    <div key={i} className="flex justify-between text-xs text-amber-700">
+                                        <span>🪑 Ghế {seat.row}{seat.number} – {seat.type || "Ghế thường"}</span>
+                                        <span className="font-bold">{(seat.price || 0).toLocaleString("vi-VN")}đ</span>
+                                    </div>
+                                ))}
+                            </div>
+                        </div>
+
                         <div className="flex items-start gap-2 p-4 bg-[#fdf5d3] rounded-xl border border-yellow-200">
                             <span className="text-blue-500 mt-0.5">ℹ️</span>
                             <p className="text-xs text-gray-600 leading-relaxed">
@@ -164,7 +217,6 @@ export default function CheckoutPage() {
                     </div>
                 </div>
 
-                {/* Link quay lại */}
                 <div className="text-center mt-8">
                     <button
                         onClick={handleGoBack}

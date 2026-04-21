@@ -1,9 +1,10 @@
 import React from 'react';
 import { Link } from 'react-router-dom';
-import newsData from '../../../data/NewsData';
 
 export default function RelatedPosts({ relatedPosts }) {
-    const posts = relatedPosts?.map(id => newsData.find(news => news.id === id)).filter(Boolean) || [];
+    // Disable for now since relatedPosts requires additional API logic
+    // const posts = relatedPosts?.map(id => newsData.find(news => news.id === id)).filter(Boolean) || [];
+    const posts = [];
     
     if (posts.length === 0) return null;
     

@@ -1,13 +1,64 @@
-import React, { useState } from 'react';
+import React, { useState, useEffect } from 'react';
 import seatsData from '../../../data/SeatsData';
 import Stage from './Stage';
 import SeatRow from './SeatRow';
 import SeatLegend from './SeatLegend';
 import SeatFooter from './SeatFooter';
+import { io } from 'socket.io-client';
+import API_URL from '../../../config/api';
 
-export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats }) {
+const socket = io(API_URL);
+
+export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, performanceId, selectedDate, selectedTime }) {
     const [selectedSeats, setSelectedSeats] = useState([]);
-    const [occupiedSeats, setOccupiedSeats] = useState([]); 
+    const [realTimeSeats, setRealTimeSeats] = useState({ booked: [], holding: {} });
+    const [dbSeats, setDbSeats] = useState([]);
+    
+    // Get user info safely
+    let currentUser = null;
+    try {
+        const userStr = localStorage.getItem('user');
+        if (userStr) currentUser = JSON.parse(userStr);
+    } catch (e) {
+        console.error("Error parsing user from localStorage", e);
+    }
+    const currentUserId = currentUser?.id || null;
+
+    useEffect(() => {
+        if (!selectedDate || !selectedTime) return;
+        
+        // Lấy trạng thái ban đầu
+        const params = new URLSearchParams({ date: selectedDate, time: selectedTime });
+        fetch(`${API_URL}/api/seat-status/${performanceId}?${params.toString()}`)
+            .then(res => res.json())
+            .then(data => {
+                if (data && !data.success && data.message) {
+                    console.warn("API Error:", data.message);
+                } else if (data && data.booked) {
+                    setRealTimeSeats(data);
+                }
+            })
+            .catch(err => console.error("Error fetching seat status:", err));
+
+        // Lắng nghe cập nhật real-time
+        socket.on('seat_update', (data) => {
+            if (data.performance_id === parseInt(performanceId) && data.date === selectedDate && data.time === selectedTime) {
+                setRealTimeSeats(data.seats);
+            }
+        });
+
+        return () => {
+            socket.off('seat_update');
+        };
+    }, [performanceId, selectedDate, selectedTime]);
+
+    // Fetch thông tin cấu hình ghế (nếu cần)
+    useEffect(() => {
+        fetch(`${API_URL}/api/seats`)
+            .then(res => res.json())
+            .then(data => setDbSeats(data))
+            .catch(err => console.error("Error fetching seats:", err));
+    }, []);
 
     // Tính tổng tiền
     const calculateTotal = () => {
@@ -30,58 +81,145 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats })
     // Kiểm tra ghế đã được đặt chưa
     const isSeatOccupied = (row, number) => {
         const seatId = `${row}${number}`;
-        return occupiedSeats.includes(seatId);
+        
+        // Defensive check: ensure realTimeSeats properties exist
+        const booked = realTimeSeats?.booked || [];
+        const holding = realTimeSeats?.holding || {};
+        
+        // Kiểm tra trong danh sách đã đặt (Postgres/SQLite)
+        if (booked.includes(seatId)) return true;
+        
+        // Kiểm tra trong danh sách đang giữ (Redis)
+        if (holding[seatId]) {
+            // Nếu là chính mình giữ thì không coi là occupied để có thể bỏ chọn
+            return true;
+        }
+
+        return false;
     };
 
     // Xử lý chọn/bỏ chọn ghế
-    const handleSeatSelect = (row, number) => {
-        const seatId = `${row}${number}`;
-        if (isSeatOccupied(row, number)) {
-            alert('Ghế này đã có người đặt!');
+    const handleSeatSelect = async (row, number) => {
+        if (!selectedDate || !selectedTime) {
+            alert('Vui lòng chọn ngày và giờ chiếu trước khi chọn ghế!');
             return;
         }
+
+        const seatId = `${row}${number}`;
         
-        setSelectedSeats(prev => {
-            let newSelected;
-            if (prev.includes(seatId)) {
-                newSelected = prev.filter(s => s !== seatId);
-            } else {
+        // Nếu ghế đã bị giữ bởi người khác hoặc đã đặt
+        if (isSeatOccupied(row, number)) {
+            // Kiểm tra xem có phải chính mình đang giữ không
+            const holder = realTimeSeats.holding[seatId];
+            if (!holder || String(holder.user_id) !== String(currentUserId)) {
+                alert('Ghế này đã có người đặt hoặc đang được giữ!');
+                return;
+            }
+        }
+
+        if (selectedSeats.includes(seatId)) {
+            // Gọi API release-seat để bỏ giữ
+            try {
+                const response = await fetch(`${API_URL}/api/cancel-hold`, {
+                    method: 'POST',
+                    headers: { 'Content-Type': 'application/json' },
+                    credentials: 'include',
+                    body: JSON.stringify({
+                        performance_id: performanceId,
+                        date: selectedDate,
+                        time: selectedTime,
+                        seat_id: seatId,
+                        user_id: currentUserId
+                    })
+                });
+                const result = await response.json();
+                if (result.success) {
+                    setSelectedSeats(prev => {
+                        const newSelected = prev.filter(s => s !== seatId);
+                        updateParentState(newSelected);
+                        return newSelected;
+                    });
+                }
+            } catch (err) {
+                console.error("Error cancelling hold:", err);
+            }
+            return;
+        }
+
+        // Gọi API hold-seat
+        try {
+            const response = await fetch(`${API_URL}/api/hold-seat`, {
+                method: 'POST',
+                headers: { 'Content-Type': 'application/json' },
+                credentials: 'include',
+                body: JSON.stringify({
+                    performance_id: performanceId,
+                    date: selectedDate,
+                    time: selectedTime,
+                    seat_id: seatId,
+                    user_id: currentUserId
+                })
+            });
+            
+            const result = await response.json();
+            if (!result.success) {
+                alert(result.message);
+                return;
+            }
+
+            // Cập nhật local state
+            setSelectedSeats(prev => {
+                let newSelected;
                 if (prev.length >= maxSeats) {
                     alert(`Bạn chỉ có thể chọn tối đa ${maxSeats} ghế!`);
+                    // rollback hold in background
+                    fetch(`${API_URL}/api/cancel-hold`, {
+                        method: 'POST',
+                        headers: { 'Content-Type': 'application/json' },
+                        body: JSON.stringify({ performance_id: performanceId, date: selectedDate, time: selectedTime, seat_id: seatId, user_id: currentUserId })
+                    });
                     return prev;
                 }
                 newSelected = [...prev, seatId];
-            }
-            
-            // Truyền thông tin chi tiết ghế lên BookingPage
-            const seatsInfo = newSelected.map(id => {
-                const r = id.charAt(0);
-                const num = parseInt(id.slice(1));
-                const isVip = ['C', 'D', 'E'].includes(r) || 
-                             seatsData.secondaryRows.default.includes(r) ||
-                             seatsData.secondaryRows.extended.includes(r);
-                const price = isVip 
-                    ? seatsData.seatTypes.blue.price 
-                    : seatsData.seatTypes.gray.price;
-                return {
-                    id,
-                    row: r,
-                    number: num,
-                    type: isVip ? 'vip' : 'regular',
-                    price
-                };
+                
+                // Cập nhật lên component cha
+                updateParentState(newSelected);
+                return newSelected;
             });
-            onSelectSeats(seatsInfo);
 
-            if (onSeatsChange) {
-                onSeatsChange({
-                    seats: newSelected,
-                    total: calculateTotalWithNewList(newSelected)
-                });
-            }
-            
-            return newSelected;
+        } catch (error) {
+            console.error("Error holding seat:", error);
+            alert("Lỗi kết nối khi giữ ghế");
+        }
+    };
+
+    const updateParentState = (newSelected) => {
+        const seatsInfo = newSelected.map(id => {
+            const r = id.charAt(0);
+            const num = parseInt(id.slice(1));
+            const isVip = ['C', 'D', 'E'].includes(r) || 
+                         seatsData.secondaryRows.default.includes(r) ||
+                         seatsData.secondaryRows.extended.includes(r);
+            const price = isVip 
+                ? seatsData.seatTypes.blue.price 
+                : seatsData.seatTypes.gray.price;
+            return {
+                id,
+                row: r,
+                number: num,
+                type: isVip ? 'vip' : 'regular',
+                price
+            };
         });
+        
+        onSelectSeats(seatsInfo);
+
+        if (onSeatsChange) {
+            onSeatsChange({
+                seats: newSelected,
+                total: calculateTotalWithNewList(newSelected)
+            });
+        }
     };
 
     // Tính tổng tiền với danh sách ghế mới

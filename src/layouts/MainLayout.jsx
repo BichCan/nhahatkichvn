@@ -1,6 +1,6 @@
 import Header from "./header/Header";
 import Footer from "./footer/Footer";
-import Navbar from "./navbar/Navbar";
+// Navbar is now integrated into Header
 import {Route, Routes} from "react-router-dom";
 import HomePage from "../pages/home/HomePage";
 import History from "../pages/about/History";
@@ -10,37 +10,50 @@ import Booking from "../pages/booking/Booking";
 import News from "../pages/news/News";
 import NewsDetail from "../pages/news/NewsDetail"; // THÊM IMPORT
 import Performances from "../pages/performances/Performances";
+import TicketInfo from "../pages/booking/TicketInfo"; // <-- mới
 import Feedback from "../pages/feedback/Feedback";
 import Task from "../pages/about/Task";
 import Infrastructure from "../pages/about/Infrastructure";
 import OrganisationStructure from "../pages/about/OrganisationStructure";
 import BookingPage from "../pages/booking/BookingPage"; // THÊM IMPORT
 import CheckoutPage from "../pages/checkout/CheckoutPage"; // THÊM IMPORT
+import LoginPage from "../pages/login/LoginPage"; // THÊM IMPORT
+import RegisterPage from "../pages/login/RegisterPage"; // THÊM IMPORT
+import AccountInfo from "../pages/login/AccountInfo"; // THÊM IMPORT
+import { useLocation } from "react-router-dom"; // THÊM IMPORT
+
 function MainLayout({ children }) {
+  const location = useLocation();
+  const isLoginPage = location.pathname === "/login";
+
   return (
-  <>
-    <Header />
-    <Navbar />
-  <main className="min-w-full">
-     <Routes>
-    <Route path="/" element={<HomePage />} />
-    <Route path="/gioi-thieu/lich-su" element={<History />} />
-    <Route path="/gioi-thieu/chuc-nang" element={<Task />} />
-    <Route path="/gioi-thieu/co-so-vat-chat" element={<Infrastructure />} />
-    <Route path="/gioi-thieu/to-chuc" element={<OrganisationStructure />} />
-    <Route path="/nghe-si" element={<Artists />} />
-    <Route path="/nghe-si/:artistId" element={<ArtistDetail />} />
-    <Route path="/dat-ve" element={<Booking />} />
-    <Route path="/dat-ve/:performanceId" element={<BookingPage />} /> 
-    <Route path="/thanh-toan/:performanceId" element={<CheckoutPage />} />
-    <Route path="/tin-tuc" element={<News />} />
-    <Route path="/tin-tuc/:slug" element={<NewsDetail />} /> 
-    <Route path="/vo-dien" element={<Performances />} />
-    <Route path="/gop-y" element={<Feedback />} />
-   </Routes>
-  </main>
-   <Footer />
-   </>
+    <>
+      {!isLoginPage && <Header />}
+
+      <main className="min-w-full">
+        <Routes>
+          <Route path="/" element={<HomePage />} />
+          <Route path="/gioi-thieu/lich-su" element={<History />} />
+          <Route path="/gioi-thieu/chuc-nang" element={<Task />} />
+          <Route path="/gioi-thieu/co-so-vat-chat" element={<Infrastructure />} />
+          <Route path="/gioi-thieu/to-chuc" element={<OrganisationStructure />} />
+          <Route path="/nghe-si" element={<Artists />} />
+          <Route path="/nghe-si/:artistId" element={<ArtistDetail />} />
+          <Route path="/dat-ve" element={<Booking />} />
+          <Route path="/dat-ve/:performanceId" element={<BookingPage />} /> 
+          <Route path="/thanh-toan/:performanceId" element={<CheckoutPage />} />
+          <Route path="/tin-tuc" element={<News />} />
+          <Route path="/tin-tuc/:id" element={<NewsDetail />} /> 
+          <Route path="/vo-dien" element={<Performances />} />
+          <Route path="/thong-tin-dat-ve" element={<TicketInfo />} />
+          <Route path="/gop-y" element={<Feedback />} />
+          <Route path="/login" element={<LoginPage />} />
+          <Route path="/register" element={<RegisterPage />} />
+          <Route path="/thong-tin-tai-khoan" element={<AccountInfo />} />
+        </Routes>
+      </main>
+      {!isLoginPage && <Footer />}
+    </>
   );
 }
 

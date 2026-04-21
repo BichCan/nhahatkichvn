@@ -1,76 +1,95 @@
 import React, { useState, useEffect } from 'react';
-import performancesdata from '../../data/PerformancesData';
-import playsData from '../../data/PlaysData';
+import { useLocation, useNavigate } from 'react-router-dom';
 import PerformanceCard from './PerformanceCard';
 import PerformancePopup from '../performances/performancepopup/PerformancePopup'; // Import popup
 
 export default function Performances() {
+    const location = useLocation();
+    const navigate = useNavigate();
+
     const [classifiedPlays, setClassifiedPlays] = useState({
         ongoing: [],
         upcoming: [],
         past: []
     });
     const [selectedPerformance, setSelectedPerformance] = useState(null); // State cho popup
-    
+    const [performancesdata, setPerformancesData] = useState([]);
+    const [allPlaySchedules, setAllPlaySchedules] = useState([]);
+
     useEffect(() => {
-        // Phân loại vở diễn
-        const today = new Date();
-        today.setHours(0, 0, 0, 0);
-        
-        const ongoing = [];
-        const upcoming = [];
-        const past = [];
-        
-        performancesdata.forEach(performance => {
-            const playSchedules = playsData.filter(s => s.p_id === performance.id);
+        Promise.all([
+            fetch('http://127.0.0.1:5000/api/performances').then(r => r.json()),
+            fetch('http://127.0.0.1:5000/api/plays').then(r => r.json())
+        ])
+        .then(([perfData, playSchedulesList]) => {
+            setPerformancesData(perfData);
+            setAllPlaySchedules(playSchedulesList);
             
-            const todaySchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate.getTime() === today.getTime();
-            });
-            
-            const upcomingSchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate > today;
-            });
-            
-            const pastSchedules = playSchedules.filter(s => {
-                const scheduleDate = new Date(s.date);
-                scheduleDate.setHours(0, 0, 0, 0);
-                return scheduleDate < today;
-            });
-            
-            if (todaySchedules.length > 0) {
-                ongoing.push(performance);
-            } else if (upcomingSchedules.length > 0) {
-                upcoming.push(performance);
-            } else if (pastSchedules.length > 0) {
-                past.push(performance);
-            } else {
-                // Nếu không có lịch diễn, mặc định là sắp diễn
-                upcoming.push(performance);
-            }
-        });
-        
-        setClassifiedPlays({ ongoing, upcoming, past });
+            // Phân loại vở diễn
+            const today = new Date();
+            today.setHours(0, 0, 0, 0);
+            const ongoing = [];
+            const upcoming = [];
+            const past = [];
+            perfData.forEach(performance => {
+                const playSchedules = playSchedulesList.filter(s => s.p_id === performance.id);
+                    const todaySchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate.getTime() === today.getTime()
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    const upcomingSchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate > today
+                            && (s.status === "còn chỗ" || s.status === "hết chỗ");
+                    });
+                    const pastSchedules = playSchedules.filter(s => {
+                        const scheduleDate = new Date(s.date);
+                        scheduleDate.setHours(0, 0, 0, 0);
+                        return scheduleDate < today;
+                    });
+                    if (todaySchedules.length > 0) {
+                        ongoing.push(performance);
+                    } else if (upcomingSchedules.length > 0) {
+                        upcoming.push(performance);
+                    } else if (pastSchedules.length > 0 && performance.status !== 'active') {
+                        past.push(performance);
+                    } else {
+                        // Nếu performance.status là 'active', vẫn xếp vào sắp diễn
+                        upcoming.push(performance);
+                    }
+                });
+
+                setClassifiedPlays({ ongoing, upcoming, past });
+            })
+            .catch(err => console.error("Error fetching performances:", err));
     }, []);
-    
+
+    // Mở popup khi có openPerformanceId từ location.state (ví dụ từ SearchBar)
+    useEffect(() => {
+        const openId = location?.state?.openPerformanceId;
+        if (openId) {
+            const perf = performancesdata.find(p => p.id === openId);
+            if (perf) {
+                setSelectedPerformance(perf);
+                // xóa state để tránh mở lại khi reload/back
+                navigate(location.pathname, { replace: true, state: {} });
+            }
+        }
+    }, [location?.state?.openPerformanceId, location?.pathname, navigate]);
+
     // Xử lý mở popup
     const handleOpenPopup = (performance) => {
         setSelectedPerformance(performance);
-        // Ngăn scroll khi popup mở
-        document.body.style.overflow = 'hidden';
     };
-    
+
     // Xử lý đóng popup
     const handleClosePopup = () => {
         setSelectedPerformance(null);
-        // Cho phép scroll lại khi đóng popup
-        document.body.style.overflow = 'unset';
     };
-    
+
     // Component section với Tailwind
     const Section = ({ title, icon, colorClass, plays, emptyMessage }) => {
         if (plays.length === 0) return null;
@@ -134,6 +153,7 @@ export default function Performances() {
                             >
                                 <PerformanceCard 
                                     performance={performance} 
+                                    playSchedules={allPlaySchedules}
                                 />
                             </div>
                         ))}
