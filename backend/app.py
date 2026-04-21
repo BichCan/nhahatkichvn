@@ -3,11 +3,13 @@ from flask_cors import CORS
 import sqlite3
 import os
 import redis
-# (PostgreSQL imports removed)
 from flask_socketio import SocketIO, emit
 from dotenv import load_dotenv
 import logging
 from datetime import datetime, timedelta
+
+from db_utils import get_db_connection, DB_PATH
+from adminapp import admin_bp
 
 # Load environment variables
 load_dotenv()
@@ -15,6 +17,9 @@ load_dotenv()
 app = Flask(__name__)
 app.secret_key = os.getenv('SECRET_KEY', 'nhahatkichvn_secret_key')
 CORS(app, supports_credentials=True, origins=["http://localhost:3000", "http://127.0.0.1:3000", "http://192.168.1.13:3000", "http://localhost:5000", "http://127.0.0.1:5000"])
+
+# Register Blueprints
+app.register_blueprint(admin_bp, url_prefix='/api/admin')
 
 # Setup Logging
 logging.basicConfig(level=logging.INFO, format='%(asctime)s - %(levelname)s - %(message)s')
@@ -47,12 +52,7 @@ app.config.update(
     PERMANENT_SESSION_LIFETIME=1800 # 30 minutes
 )
 
-DB_PATH = os.path.join(os.path.dirname(__file__), '..', 'nhahatkichvn.db')
-
-def get_db_connection():
-    conn = sqlite3.connect(DB_PATH)
-    conn.row_factory = sqlite3.Row
-    return conn
+# DB_PATH and get_db_connection moved to db_utils.py
 
 def init_db():
     conn = get_db_connection()
@@ -63,7 +63,8 @@ def init_db():
             id INTEGER PRIMARY KEY AUTOINCREMENT,
             email TEXT UNIQUE NOT NULL,
             password TEXT NOT NULL,
-            full_name TEXT NOT NULL
+            full_name TEXT NOT NULL,
+            phone TEXT
         )
     ''')
     # Create bookings table
@@ -392,13 +393,16 @@ def login():
         session['user_id'] = user['id']
         session['user_name'] = user['full_name']
         session['user_email'] = user['email']
+        session['user_phone'] = user['phone']
         return jsonify({
             "success": True, 
             "message": "Đăng nhập thành công",
             "user": {
                 "id": user['id'],
                 "full_name": user['full_name'],
-                "email": user['email']
+                "email": user['email'],
+                "phone": user['phone'],
+                "role": user['role']
             }
         })
     else:
@@ -410,8 +414,9 @@ def register():
     email = data.get('email')
     password = data.get('password')
     full_name = data.get('full_name')
+    phone = data.get('phone')
     
-    if not email or not password or not full_name:
+    if not email or not password or not full_name or not phone:
         return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ thông tin"}), 400
         
     conn = get_db_connection()
@@ -424,7 +429,7 @@ def register():
         return jsonify({"success": False, "message": "Email này đã được đăng ký"}), 400
         
     try:
-        c.execute('INSERT INTO users (email, password, full_name) VALUES (?, ?, ?)', (email, password, full_name))
+        c.execute('INSERT INTO users (email, password, full_name, phone) VALUES (?, ?, ?, ?)', (email, password, full_name, phone))
         conn.commit()
         return jsonify({"success": True, "message": "Đăng ký thành công! Vui lòng đăng nhập."})
     except Exception as e:
@@ -435,20 +440,114 @@ def register():
 @app.route('/api/check-session', methods=['GET'])
 def check_session():
     if 'user_id' in session:
-        return jsonify({
-            "logged_in": True,
-            "user": {
-                "id": session['user_id'],
-                "full_name": session['user_name'],
-                "email": session.get('user_email', '')
-            }
-        })
+        user_id = session['user_id']
+        conn = get_db_connection()
+        c = conn.cursor()
+        c.execute('SELECT id, full_name, email, phone FROM users WHERE id = ?', (user_id,))
+        user = c.fetchone()
+        conn.close()
+        
+        if user:
+            # Sync session just in case
+            session['user_name'] = user['full_name']
+            session['user_email'] = user['email']
+            session['user_phone'] = user['phone']
+            
+            return jsonify({
+                "logged_in": True,
+                "user": {
+                    "id": user['id'],
+                    "full_name": user['full_name'],
+                    "email": user['email'],
+                    "phone": user['phone'] or ''
+                }
+            })
     return jsonify({"logged_in": False})
 
 @app.route('/api/logout', methods=['POST'])
 def logout():
     session.clear()
     return jsonify({"success": True, "message": "Đã đăng xuất"})
+
+@app.route('/api/user/update-profile', methods=['POST'])
+def update_profile():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập"}), 401
+    
+    data = request.json
+    full_name = data.get('full_name')
+    email = data.get('email')
+    phone = data.get('phone')
+    
+    if not full_name or not email:
+        return jsonify({"success": False, "message": "Họ tên và email không được để trống"}), 400
+        
+    user_id = session['user_id']
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    try:
+        # Check if email is taken by another user
+        c.execute('SELECT id FROM users WHERE email = ? AND id != ?', (email, user_id))
+        if c.fetchone():
+            return jsonify({"success": False, "message": "Email này đã được sử dụng bởi tài khoản khác"}), 400
+            
+        c.execute('''
+            UPDATE users 
+            SET full_name = ?, email = ?, phone = ?, updated_at = CURRENT_TIMESTAMP
+            WHERE id = ?
+        ''', (full_name, email, phone, user_id))
+        conn.commit()
+        
+        # Update session
+        session['user_name'] = full_name
+        session['user_email'] = email
+        session['user_phone'] = phone
+        
+        return jsonify({
+            "success": True, 
+            "message": "Cập nhật thông tin thành công",
+            "user": {
+                "id": user_id,
+                "full_name": full_name,
+                "email": email,
+                "phone": phone
+            }
+        })
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@app.route('/api/user/change-password', methods=['POST'])
+def change_password():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập"}), 401
+        
+    data = request.json
+    old_password = data.get('old_password')
+    new_password = data.get('new_password')
+    
+    if not old_password or not new_password:
+        return jsonify({"success": False, "message": "Vui lòng nhập đầy đủ mật khẩu cũ và mới"}), 400
+        
+    user_id = session['user_id']
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    try:
+        c.execute('SELECT password FROM users WHERE id = ?', (user_id,))
+        row = c.fetchone()
+        if not row or row['password'] != old_password:
+            return jsonify({"success": False, "message": "Mật khẩu cũ không chính xác"}), 401
+            
+        c.execute('UPDATE users SET password = ?, updated_at = CURRENT_TIMESTAMP WHERE id = ?', (new_password, user_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đổi mật khẩu thành công"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/bookings', methods=['GET', 'POST'])
 def handle_bookings():
@@ -613,18 +712,22 @@ def get_tickets():
             conn.close()
             
     c.execute('''
-        SELECT t.id, t.order_id, o.payment_method, t.price, t.created_at,
+        SELECT t.id, t.order_id, o.payment_method, o.payment_status, o.admin_confirmed_by,
+               t.price, t.status as ticket_status, t.hold_expired_at, t.created_at,
                p.id as performance_id, p.title as performance_name, p.poster_url,
                s.seat_row, s.seat_number, s.id as seat_id,
                pl.start_time
         FROM tickets t
-        JOIN orders o ON t.order_id = o.order_id
+        LEFT JOIN orders o ON t.order_id = o.order_id
         JOIN plays pl ON t.play_id = pl.id
         JOIN performances p ON pl.performance_id = p.id
-        JOIN seats s ON Cast(t.seat_id as integer) = s.id
-        WHERE o.user_id = ?
+        JOIN seats s ON (
+               Cast(t.seat_id as text) = Cast(s.id as text) 
+               OR t.seat_id = s.seat_row || s.seat_number
+        )
+        WHERE (o.user_id = ? OR t.held_by_user_id = ?)
         ORDER BY t.created_at DESC
-    ''', (user_id,))
+    ''', (user_id, user_id))
     rows = c.fetchall()
     
     tickets = []
@@ -656,10 +759,66 @@ def get_tickets():
             "selectedTime": time_part,
             "price": r["price"],
             "paymentMethod": r["payment_method"],
+            "paymentStatus": r["payment_status"],
+            "adminConfirmed": bool(r["admin_confirmed_by"]),
+            "status": r["ticket_status"],
+            "holdExpiredAt": r["hold_expired_at"],
             "createdAt": r["created_at"]
         })
     conn.close()
     return jsonify(tickets)
+
+@app.route('/api/orders/cancel', methods=['POST'])
+def cancel_order():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập"}), 401
+    
+    data = request.json
+    order_id = data.get('order_id')
+    if not order_id:
+        return jsonify({"success": False, "message": "Thiếu mã đơn hàng"}), 400
+        
+    user_id = session['user_id']
+    conn = get_db_connection()
+    c = conn.cursor()
+    
+    try:
+        # Check if order belongs to user and is pending
+        c.execute('SELECT * FROM orders WHERE order_id = ? AND user_id = ?', (order_id, user_id))
+        order = c.fetchone()
+        if not order:
+            return jsonify({"success": False, "message": "Không tìm thấy đơn hàng"}), 404
+        
+        if order['payment_status'] != 'pending':
+            return jsonify({"success": False, "message": "Chỉ có thể hủy đơn hàng đang chờ thanh toán"}), 400
+            
+        # 1. Update order status
+        c.execute('UPDATE orders SET payment_status = ? WHERE order_id = ?', ('cancelled', order_id))
+        
+        # 2. Update tickets status
+        c.execute('UPDATE tickets SET status = ?, order_id = NULL, held_by_user_id = NULL, hold_expired_at = NULL WHERE order_id = ?', ('available', order_id))
+        
+        # 3. Update bookings status
+        c.execute("UPDATE bookings SET status = 'cancelled' WHERE order_id = ?", (order_id,))
+        
+        conn.commit()
+        
+        # Optional: broadcast update (though cleanup handles this too)
+        # We should find out performance info to broadcast
+        c.execute('''
+            SELECT DISTINCT b.performance_id, b.show_date, b.show_time 
+            FROM bookings b 
+            WHERE b.order_id = ?
+        ''', (order_id,))
+        for b in c.fetchall():
+            broadcast_seat_update(b['performance_id'], b['show_date'], b['show_time'])
+            
+        return jsonify({"success": True, "message": "Đã hủy đơn hàng thành công"})
+    except Exception as e:
+        conn.rollback()
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
 
 @app.route('/api/performances', methods=['GET'])
 def get_performances():
@@ -850,6 +1009,37 @@ def get_ratings(performance_id):
     
     conn.close()
     return jsonify({"avg": avg, "count": agg['cnt'], "reviews": ratings})
+
+@app.route('/api/ratings', methods=['POST'])
+def post_rating():
+    if 'user_id' not in session:
+        return jsonify({"success": False, "message": "Vui lòng đăng nhập để gửi đánh giá"}), 401
+    
+    data = request.json
+    performance_id = data.get('performance_id')
+    rating = data.get('rating')
+    review = data.get('review')
+    user_id = session['user_id']
+    
+    if not performance_id or not rating:
+        return jsonify({"success": False, "message": "Thiếu thông tin đánh giá"}), 400
+    
+    if not (1 <= int(rating) <= 5):
+        return jsonify({"success": False, "message": "Đánh giá không hợp lệ (1-5)"}), 400
+        
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('''
+            INSERT INTO ratings (user_id, performance_id, rating, review)
+            VALUES (?, ?, ?, ?)
+        ''', (user_id, performance_id, rating, review))
+        conn.commit()
+        return jsonify({"success": True, "message": "Cảm ơn bạn đã đánh giá!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
 
 if __name__ == '__main__':
     threading.Thread(target=run_background_cleanup, daemon=True).start()

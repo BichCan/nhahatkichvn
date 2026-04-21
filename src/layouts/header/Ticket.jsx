@@ -1,113 +1,98 @@
 import React from "react";
-import performancesdata from "../../data/PerformancesData";
 
-
+/**
+ * Premium Ticket Component
+ * Redesigned for a high-end theater experience.
+ */
 export default function Ticket({ ticket = {}, onDelete }) {
   const {
     performance = {},
-    seat,          // 1 ghế duy nhất (object {id, row, number, type, price})
+    seat,
     selectedDate,
     selectedTime,
     orderCode,
-    createdAt
+    price,
+    status,
+    adminConfirmed
   } = ticket;
 
   const formatVnd = (v) => (Number(v) || 0).toLocaleString("vi-VN") + "đ";
 
-  // Hiển thị thông tin ghế
   const seatLabel = seat
-    ? `${seat.row}${seat.number} (${seat.type || "Ghế thường"})`
-    : ticket.seatLabel || "—";
+    ? `${seat.row}${seat.number}`
+    : "—";
 
-  const seatPrice = seat?.price || ticket.price || 0;
+  const code = orderCode || "N/A";
+  
+  const posterImgSrc = performance?.poster_url || "/placeholder-poster.jpg";
 
-  // Mã vé cố định (lưu sẵn từ khi tạo)
-  const code = orderCode || `NTK-${performance?.id || "00"}-${String(createdAt || Date.now()).slice(-6)}`;
-
-  // Get poster from mock data
-  const mockPerformance = performancesdata.find(p => p.id === performance?.id);
-  const posterImgSrc = mockPerformance?.src || performance?.src || performance?.image || performance?.posterUrl || "/placeholder-poster.jpg";
-
-  // Format ngày
-  const formatDate = (d) => {
-    if (!d) return "—";
-    const dt = new Date(d);
-    if (isNaN(dt.getTime())) return d;
-    return dt.toLocaleDateString("vi-VN", { day: "2-digit", month: "2-digit", year: "numeric" });
-  };
+  // Status mapping
+  const isPaid = status === 'paid' || adminConfirmed;
+  const isCancelled = status === 'cancelled';
 
   return (
-    <div className="relative rounded-2xl overflow-hidden shadow-lg flex flex-col md:flex-row bg-white print:shadow-none">
-      {/* Ảnh poster */}
-      <div className="md:w-[220px] flex-shrink-0 bg-black flex items-stretch">
+    <div className="relative bg-white rounded-3xl overflow-hidden shadow-xl shadow-gray-200/50 flex flex-col sm:flex-row border border-gray-100 group transition-all duration-300 hover:shadow-2xl hover:-translate-y-1">
+      {/* Visual Side */}
+      <div className="sm:w-48 h-40 sm:h-auto relative overflow-hidden shrink-0">
         <img
           src={posterImgSrc}
           alt={performance?.name}
-          className="object-cover w-full h-52 md:h-full"
+          className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-110"
         />
+        <div className="absolute inset-0 bg-gradient-to-r from-black/40 to-transparent sm:hidden" />
       </div>
 
-      {/* Thông tin chính */}
-      <div className="flex-1 bg-yellow-400 text-black px-6 py-5">
-        <div className="flex items-start justify-between gap-4">
-          <div className="flex-1 min-w-0">
-            <div className="text-xs uppercase font-semibold text-black/60 mb-1">Sân khấu chính · Nhà Hát Kịch Việt Nam</div>
-            <h2 className="text-xl font-extrabold tracking-tight leading-tight truncate">{performance?.name || "—"}</h2>
-
-            <div className="mt-4 space-y-1.5 text-sm text-black/80">
-              <div className="flex items-center gap-2">
-                <span className="font-semibold w-24 shrink-0">📅 Ngày:</span>
-                <span>{formatDate(selectedDate)}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold w-24 shrink-0">⏰ Giờ:</span>
-                <span>{selectedTime || "—"}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold w-24 shrink-0">🪑 Ghế:</span>
-                <span className="text-lg font-bold">{seatLabel}</span>
-              </div>
-              <div className="flex items-center gap-2">
-                <span className="font-semibold w-24 shrink-0">💰 Giá:</span>
-                <span className="text-base font-bold">{formatVnd(seatPrice)}</span>
-              </div>
+      {/* Info Side */}
+      <div className="flex-1 p-6 flex flex-col justify-between">
+        <div>
+          <div className="flex justify-between items-start mb-4">
+            <div>
+              <p className="text-[10px] font-black uppercase tracking-[0.2em] text-[#5a1a1a]/60 mb-1">
+                Nhà Hát Kịch Việt Nam
+              </p>
+              <h3 className="text-xl font-black text-gray-800 leading-tight">
+                {performance?.name || "Vở diễn"}
+              </h3>
+            </div>
+            <div className="text-right">
+              <span className={`px-3 py-1 rounded-full text-[9px] font-black uppercase tracking-widest 
+                ${isPaid ? "bg-green-100 text-green-700" : 
+                  isCancelled ? "bg-red-100 text-red-700" : 
+                  "bg-amber-100 text-amber-700"}`}>
+                {isPaid ? "Đã xác nhận" : isCancelled ? "Đã hủy" : "Đang xử lý"}
+              </span>
             </div>
           </div>
 
-          {/* Mã vé */}
-          <div className="text-right flex-shrink-0">
-            <div className="text-[10px] text-black/60 uppercase mb-1">Mã vé</div>
-            <div className="inline-block bg-black text-yellow-400 px-3 py-1 rounded font-mono font-bold text-sm">{code}</div>
-            <div className="mt-3 text-xs text-black/70 max-w-[120px] text-right">Mang mã này khi đến rạp</div>
+          <div className="grid grid-cols-2 gap-4 text-sm">
+            <div>
+              <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Thời gian</p>
+              <p className="font-bold text-gray-700">{selectedDate} | {selectedTime}</p>
+            </div>
+            <div>
+              <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Vị trí ghế</p>
+              <p className="font-bold text-gray-700 text-lg">{seatLabel}</p>
+            </div>
+          </div>
+        </div>
+
+        <div className="mt-6 pt-6 border-t border-dashed border-gray-200 flex items-center justify-between">
+          <div>
+            <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Mã đơn hàng</p>
+            <p className="font-mono font-bold text-[#5a1a1a]">{code}</p>
+          </div>
+          <div className="text-right">
+             <p className="text-[10px] text-gray-400 font-bold uppercase mb-1">Giá vé</p>
+             <p className="text-xl font-black text-gray-900">{formatVnd(price)}</p>
           </div>
         </div>
       </div>
 
-      {/* Barcode stub */}
-      <div className="md:w-20 bg-yellow-500 flex items-center justify-center p-3 flex-shrink-0">
-        <div className="flex flex-col items-center justify-center text-black gap-2">
-          <div className="transform md:-rotate-90 text-[9px] font-bold tracking-widest whitespace-nowrap">TICKET</div>
-          <div className="w-10 h-20 bg-black rounded-sm opacity-80" />
-          <div className="text-[9px]">NTK·2026</div>
+      {/* Decorative Stub */}
+      <div className="hidden sm:flex w-12 bg-gray-50 border-l border-dashed border-gray-200 items-center justify-center">
+        <div className="transform -rotate-90 whitespace-nowrap text-[10px] font-black tracking-[0.4em] text-gray-300">
+          THEATER TICKET
         </div>
-      </div>
-
-      {/* Buttons */}
-      <div className="absolute top-3 right-24 flex gap-2 print:hidden">
-        <button
-          onClick={() => window.print()}
-          className="px-3 py-1 bg-[#5a1a1a] text-white rounded text-xs font-semibold hover:bg-[#7a2323]"
-        >
-          🖨 In
-        </button>
-        {onDelete && (
-          <button
-            onClick={() => onDelete(code)}
-            className="px-3 py-1 border border-gray-400 rounded text-xs font-semibold hover:bg-gray-100 bg-white"
-          >
-            🗑 Xóa
-          </button>
-        )}
       </div>
     </div>
   );

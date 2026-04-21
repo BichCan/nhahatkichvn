@@ -7,6 +7,7 @@ import PerformanceCast from './PerformanceCast';
 import PerformanceCreativeTeam from './PerformanceCreativeTeam';
 import PerformanceTechTeam from './PerformanceTechTeam';
 import PerformanceActions from './PerformanceActions';
+import PerformanceReviews from './PerformanceReviews';
 
 export default function PerformancePopup({ performance, onClose }) {
     useEffect(() => {
@@ -62,6 +63,8 @@ export default function PerformancePopup({ performance, onClose }) {
                                     <PerformanceTechTeam performance={performance} />
                                 </div>
                             </div>
+                            
+                            <PerformanceReviews performanceId={performance.id} />
                         </div>
                     </div>
                 </div>

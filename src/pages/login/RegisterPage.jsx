@@ -1,10 +1,11 @@
 import React, { useState } from 'react';
 import { useNavigate, Link } from 'react-router-dom';
-import { FaArrowRight, FaUser, FaEnvelope, FaLock } from 'react-icons/fa';
+import { FaArrowRight, FaUser, FaEnvelope, FaLock, FaPhone } from 'react-icons/fa';
 
 const RegisterPage = () => {
     const [fullName, setFullName] = useState('');
     const [email, setEmail] = useState('');
+    const [phone, setPhone] = useState('');
     const [password, setPassword] = useState('');
     const [confirmPassword, setConfirmPassword] = useState('');
     const [error, setError] = useState('');
@@ -31,7 +32,8 @@ const RegisterPage = () => {
                 body: JSON.stringify({ 
                     email, 
                     password, 
-                    full_name: fullName 
+                    full_name: fullName,
+                    phone: phone
                 }),
             });
 
@@ -108,6 +110,20 @@ const RegisterPage = () => {
                                 required
                             />
                             <FaEnvelope className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
+                        </div>
+                    </div>
+                    <div className="space-y-1">
+                        <label className="text-[10px] font-bold text-[#8b6b4d] tracking-wider uppercase">Số điện thoại</label>
+                        <div className="relative">
+                            <input
+                                type="tel"
+                                value={phone}
+                                onChange={(e) => setPhone(e.target.value)}
+                                placeholder="0123 456 789"
+                                className="w-full px-4 py-3 bg-[#f9f8f4] border border-gray-200 rounded-sm focus:outline-none focus:border-[#8b1d21] transition-colors text-sm pl-10"
+                                required
+                            />
+                            <FaPhone className="absolute left-3 top-1/2 -translate-y-1/2 text-gray-400 text-xs" />
                         </div>
                     </div>
 
