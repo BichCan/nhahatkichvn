@@ -274,3 +274,101 @@ def delete_artist(artist_id):
         return jsonify({"success": False, "message": str(e)}), 500
     finally:
         conn.close()
+
+# Order & Payment Management Routes
+@admin_bp.route('/orders', methods=['GET'])
+def get_orders():
+    if 'user_role' in session and session['user_role'] != 'admin':
+         return jsonify({"success": False, "message": "Bạn không có quyền truy cập"}), 403
+         
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Query joining orders with user info and aggregating performance titles
+        c.execute('''
+            SELECT 
+                o.order_id, 
+                o.user_id, 
+                o.total_amount, 
+                o.payment_status, 
+                o.payment_method, 
+                o.payment_date,
+                o.created_at,
+                u.full_name as customer_name,
+                u.phone as customer_phone,
+                (SELECT p.title FROM performances p 
+                 JOIN plays pl ON p.id = pl.performance_id 
+                 JOIN tickets t ON pl.id = t.play_id 
+                 JOIN order_details od ON t.id = od.ticket_id 
+                 WHERE od.order_id = o.order_id LIMIT 1) as performance_title,
+                (SELECT pl.start_time FROM plays pl 
+                 JOIN tickets t ON pl.id = t.play_id 
+                 JOIN order_details od ON t.id = od.ticket_id 
+                 WHERE od.order_id = o.order_id LIMIT 1) as showtime
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+        ''')
+        orders = [dict(row) for row in c.fetchall()]
+        return jsonify({"success": True, "orders": orders})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/orders/<string:order_id>/status', methods=['PUT'])
+def update_order_status(order_id):
+    data = request.json
+    admin_id, error = verify_admin_status(data)
+    if error: return error
+    
+    status = data.get('status')
+    if not status:
+        return jsonify({"success": False, "message": "Thiếu trạng thái cập nhật"}), 400
+        
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Update status and set payment_date if paid
+        if status == 'paid':
+            c.execute('''
+                UPDATE orders 
+                SET payment_status = ?, payment_date = datetime('now'), admin_confirmed_by = ?
+                WHERE order_id = ?
+            ''', (status, admin_id, order_id))
+        else:
+            c.execute('''
+                UPDATE orders 
+                SET payment_status = ? 
+                WHERE order_id = ?
+            ''', (status, order_id))
+            
+        conn.commit()
+        return jsonify({"success": True, "message": f"Cập nhật trạng thái {status} thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/orders/<string:order_id>', methods=['DELETE'])
+def delete_order(order_id):
+    admin_id_fallback = request.args.get('admin_id') or request.headers.get('X-Admin-ID')
+    admin_id, error = verify_admin_status({'admin_id': admin_id_fallback})
+    if error: return error
+          
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Protection: do not delete paid orders
+        c.execute('SELECT payment_status FROM orders WHERE order_id = ?', (order_id,))
+        order = c.fetchone()
+        if order and order['payment_status'] == 'paid':
+            return jsonify({"success": False, "message": "Không thể xóa đơn hàng đã thanh toán"}), 400
+
+        c.execute('DELETE FROM orders WHERE order_id = ?', (order_id,))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đã xóa đơn hàng"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
