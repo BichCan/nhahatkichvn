@@ -1,16 +1,66 @@
-import React, { useState } from 'react';
-import { FaTimes, FaUser, FaIdCard, FaImage, FaAlignLeft, FaPlus } from 'react-icons/fa';
+import React, { useState, useEffect } from 'react';
+import { FaTimes, FaCamera, FaSave } from 'react-icons/fa';
 import API_URL from '../../../config/api';
 
-const AddArtistModal = ({ isOpen, onClose, onRefresh }) => {
+const AddArtistModal = ({ isOpen, onClose, onRefresh, artistData = null }) => {
     const [formData, setFormData] = useState({
         name: '',
-        role_type: '',
+        role_type: 'actor',
         bio: '',
         avatar_url: ''
     });
     const [loading, setLoading] = useState(false);
+    const [uploading, setUploading] = useState(false);
     const [message, setMessage] = useState('');
+
+    useEffect(() => {
+        if (artistData) {
+            setFormData({
+                name: artistData.name || '',
+                role_type: artistData.role_type || 'actor',
+                bio: artistData.bio || '',
+                avatar_url: artistData.avatar_url || ''
+            });
+        } else {
+            setFormData({
+                name: '',
+                role_type: 'actor',
+                bio: '',
+                avatar_url: ''
+            });
+        }
+        setMessage('');
+    }, [artistData, isOpen]);
+
+    const handleImageUpload = async (e) => {
+        const file = e.target.files[0];
+        if (!file) return;
+
+        setUploading(true);
+        setMessage('');
+
+        const formDataUpload = new FormData();
+        formDataUpload.append('file', file);
+
+        try {
+            const response = await fetch(`${API_URL}/api/admin/upload`, {
+                method: 'POST',
+                body: formDataUpload
+            });
+
+            const data = await response.json();
+            if (data.success) {
+                setFormData(prev => ({ ...prev, avatar_url: data.url }));
+                setMessage('Tải ảnh lên thành công!');
+            } else {
+                setMessage(data.message || 'Lỗi khi tải ảnh.');
+            }
+        } catch (error) {
+            setMessage('Lỗi kết nối máy chủ khi tải ảnh.');
+        } finally {
+            setUploading(false);
+        }
+    };
 
     if (!isOpen) return null;
 
@@ -19,23 +69,28 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh }) => {
         setLoading(true);
         setMessage('');
 
+        const method = artistData ? 'PUT' : 'POST';
+        const url = artistData 
+            ? `${API_URL}/api/admin/artists/${artistData.id}`
+            : `${API_URL}/api/admin/artists`;
+
         try {
-            const response = await fetch(`${API_URL}/api/admin/artists`, {
-                method: 'POST',
+            const response = await fetch(url, {
+                method,
                 headers: {
-                    'Content-Type': 'application/json'
+                    'Content-Type': 'application/json',
+                    'X-Admin-ID': '1' // Basic fallback
                 },
                 body: JSON.stringify(formData)
             });
 
             const data = await response.json();
             if (data.success) {
-                setMessage('Thêm nghệ sĩ thành công!');
-                setFormData({ name: '', role_type: '', bio: '', avatar_url: '' });
+                setMessage(artistData ? 'Cập nhật thành công!' : 'Thêm nghệ sĩ thành công!');
                 setTimeout(() => {
                     onRefresh();
                     onClose();
-                }, 1500);
+                }, 1000);
             } else {
                 setMessage(data.message || 'Có lỗi xảy ra.');
             }
@@ -47,95 +102,130 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh }) => {
     };
 
     return (
-        <div className="fixed inset-0 z-50 flex items-center justify-center p-4">
-            <div className="absolute inset-0 bg-black/60 backdrop-blur-sm" onClick={onClose}></div>
+        <div className="fixed inset-0 z-[100] flex items-center justify-center p-4 sm:p-6">
+            <div className="absolute inset-0 bg-gray-900/60 backdrop-blur-sm" onClick={onClose}></div>
             
-            <div className="relative z-10 w-full max-w-2xl bg-[#1a1a1a] border border-white/10 rounded-2xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-300">
-                <div className="p-6 border-b border-white/5 flex items-center justify-between">
-                    <h3 className="text-xl font-bold text-white flex items-center gap-2">
-                        <FaPlus className="text-red-600" /> Thêm nghệ sĩ mới
-                    </h3>
-                    <button onClick={onClose} className="text-gray-400 hover:text-white p-2 rounded-lg hover:bg-white/5 transition-colors">
-                        <FaTimes />
+            <div className="relative z-10 w-full max-w-2xl bg-white rounded-xl shadow-2xl overflow-hidden animate-in fade-in zoom-in duration-200">
+                {/* Header */}
+                <div className="px-8 pt-8 pb-4 flex justify-between items-start">
+                    <div>
+                        <h2 className="text-3xl font-serif font-bold text-[#700c1e] mb-1">
+                            {artistData ? 'Cập nhật Nghệ sĩ' : 'Thêm Nghệ sĩ Mới'}
+                        </h2>
+                        <p className="text-xs text-gray-400 font-medium tracking-wide">
+                            Cập nhật hồ sơ lưu trữ cho đội ngũ nghệ sĩ của nhà hát.
+                        </p>
+                    </div>
+                    <button onClick={onClose} className="p-2 text-gray-300 hover:text-gray-500 transition-colors">
+                        <FaTimes size={20} />
                     </button>
                 </div>
 
-                <form onSubmit={handleSubmit} className="p-6 space-y-5">
+                <form onSubmit={handleSubmit} className="px-8 py-4 flex flex-col gap-8">
                     {message && (
-                        <div className={`p-4 rounded-lg text-sm text-center ${message.includes('thành công') ? 'bg-green-500/20 text-green-200' : 'bg-red-500/20 text-red-200'}`}>
+                        <div className={`p-3 rounded-lg text-xs font-bold text-center ${message.includes('thành công') ? 'bg-emerald-50 text-emerald-700' : 'bg-red-50 text-red-700'}`}>
                             {message}
                         </div>
                     )}
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                                <FaUser /> Họ và tên
-                            </label>
-                            <input
-                                type="text"
-                                required
-                                value={formData.name}
-                                onChange={(e) => setFormData({ ...formData, name: e.target.value })}
-                                placeholder="Tên nghệ sĩ..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
-                            />
+                    {/* Top Section: Avatar + Identity */}
+                    <div className="flex flex-col md:flex-row gap-8">
+                        {/* Avatar Box */}
+                        <div className="w-full md:w-[200px] flex-shrink-0 space-y-2">
+                             <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Ảnh đại diện</label>
+                              <div className="aspect-square bg-gray-50 rounded-xl border border-dashed border-gray-200 flex flex-col items-center justify-center gap-3 group relative cursor-pointer overflow-hidden hover:border-[#700c1e]/30 transition-all">
+                                {uploading ? (
+                                    <div className="flex flex-col items-center gap-2">
+                                        <div className="w-8 h-8 border-2 border-gray-200 border-t-[#700c1e] rounded-full animate-spin"></div>
+                                        <span className="text-[10px] font-black text-gray-400 uppercase tracking-widest">UPLOADING...</span>
+                                    </div>
+                                ) : formData.avatar_url ? (
+                                    <>
+                                        <img src={formData.avatar_url} alt="Preview" className="w-full h-full object-cover" />
+                                        <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 flex items-center justify-center transition-all">
+                                            <span className="text-white text-[10px] font-black uppercase tracking-widest">THAY ĐỔI ẢNH</span>
+                                        </div>
+                                    </>
+                                ) : (
+                                    <>
+                                        <div className="p-3 bg-white rounded-full shadow-sm text-gray-400 group-hover:text-[#700c1e] transition-colors">
+                                            <FaCamera size={24} />
+                                        </div>
+                                        <span className="text-[10px] font-black text-gray-300 uppercase tracking-widest">CHỌN ẢNH</span>
+                                    </>
+                                )}
+                                <input 
+                                    type="file" 
+                                    accept="image/*"
+                                    onChange={handleImageUpload}
+                                    className="absolute inset-0 opacity-0 cursor-pointer"
+                                />
+                              </div>
                         </div>
 
-                        <div className="space-y-2">
-                            <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                                <FaIdCard /> Vai trò / Danh hiệu
-                            </label>
-                            <input
-                                type="text"
-                                value={formData.role_type}
-                                onChange={(e) => setFormData({ ...formData, role_type: e.target.value })}
-                                placeholder="VD: Nghệ sĩ ưu tú, Diễn viên kịch..."
-                                className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
-                            />
+                        {/* Identity Fields */}
+                        <div className="flex-1 space-y-6">
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Họ và tên</label>
+                                <input
+                                    type="text"
+                                    required
+                                    value={formData.name}
+                                    onChange={(e) => setFormData({ ...formData, name: e.target.value })}
+                                    placeholder="VD: Lê Thanh Thảo"
+                                    className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#700c1e] placeholder:text-gray-300 transition-all shadow-sm"
+                                />
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Vai trò</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.role_type}
+                                        onChange={(e) => setFormData({ ...formData, role_type: e.target.value })}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 appearance-none focus:outline-none focus:border-[#700c1e] transition-all shadow-sm"
+                                    >
+                                        <option value="actor">Diễn viên</option>
+                                        <option value="director">Đạo diễn</option>
+                                        <option value="musician">Nhạc công</option>
+                                        <option value="other">Khác</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
                         </div>
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <FaImage /> Đường dẫn ảnh đại diện (URL)
-                        </label>
-                        <input
-                            type="text"
-                            value={formData.avatar_url}
-                            onChange={(e) => setFormData({ ...formData, avatar_url: e.target.value })}
-                            placeholder="https://example.com/avatar.jpg"
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors"
-                        />
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-xs font-bold text-gray-500 uppercase flex items-center gap-2">
-                            <FaAlignLeft /> Tiểu sử / Giới thiệu
-                        </label>
+                    {/* Bio Section */}
+                    <div className="space-y-1.5">
+                        <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Tiểu sử chuyên môn</label>
                         <textarea
                             rows="4"
                             value={formData.bio}
                             onChange={(e) => setFormData({ ...formData, bio: e.target.value })}
-                            placeholder="Nhập giới thiệu ngắn về nghệ sĩ..."
-                            className="w-full bg-white/5 border border-white/10 rounded-xl px-4 py-3 text-white focus:outline-none focus:border-red-600 transition-colors resize-none"
+                            placeholder="Mô tả lịch sử hoạt động, phong cách nghệ thuật và các tác phẩm tiêu biểu..."
+                            className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 focus:outline-none focus:border-[#700c1e] placeholder:text-gray-300 transition-all shadow-sm resize-none"
                         ></textarea>
                     </div>
 
-                    <div className="pt-4 flex gap-4">
+                    {/* Footer Buttons */}
+                    <div className="flex items-center justify-end gap-6 pt-4 pb-8">
                         <button
                             type="button"
                             onClick={onClose}
-                            className="flex-1 py-3 border border-white/10 rounded-xl text-white font-semibold hover:bg-white/5 transition-colors"
+                            className="text-sm font-bold text-[#700c1e]/70 hover:text-[#700c1e] transition-colors"
                         >
-                            Hủy bỏ
+                            Hủy
                         </button>
                         <button
                             type="submit"
                             disabled={loading}
-                            className="flex-[2] py-3 bg-red-600 rounded-xl text-white font-semibold hover:bg-red-700 transition-colors disabled:opacity-50"
+                            className="flex items-center gap-2 px-8 py-3.5 bg-[#700c1e] text-white text-sm font-bold rounded-lg hover:bg-[#5a0a18] transition-all shadow-lg shadow-[#700c1e]/20 disabled:opacity-50 active:scale-95"
                         >
-                            {loading ? 'Đang xử lý...' : 'Lưu thông tin'}
+                            <FaSave size={14} />
+                            {loading ? 'Đang lưu...' : 'Lưu Nghệ Sĩ'}
                         </button>
                     </div>
                 </form>

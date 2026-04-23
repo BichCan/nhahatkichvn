@@ -1,7 +1,20 @@
 from flask import Blueprint, jsonify, request, session
 from db_utils import get_db_connection
+import os
+import uuid
+from werkzeug.utils import secure_filename
 
 admin_bp = Blueprint('admin', __name__)
+
+# Configure Upload Folder
+UPLOAD_FOLDER = os.path.join(os.path.dirname(__file__), '..', 'public', 'uploads')
+ALLOWED_EXTENSIONS = {'png', 'jpg', 'jpeg', 'gif', 'webp'}
+
+if not os.path.exists(UPLOAD_FOLDER):
+    os.makedirs(UPLOAD_FOLDER, exist_ok=True)
+
+def allowed_file(filename):
+    return '.' in filename and filename.rsplit('.', 1)[1].lower() in ALLOWED_EXTENSIONS
 
 @admin_bp.route('/login', methods=['POST'])
 def admin_login():
@@ -69,6 +82,30 @@ def verify_admin_status(request_data=None):
             conn.close()
             
     return None, (jsonify({"success": False, "message": "Vui lòng đăng nhập với quyền admin"}), 401)
+
+@admin_bp.route('/upload', methods=['POST'])
+def upload_file():
+    if 'file' not in request.files:
+        return jsonify({"success": False, "message": "Không tìm thấy file"}), 400
+    
+    file = request.files['file']
+    if file.filename == '':
+        return jsonify({"success": False, "message": "Chưa chọn file"}), 400
+    
+    if file and allowed_file(file.filename):
+        # Generate unique filename
+        ext = file.filename.rsplit('.', 1)[1].lower()
+        filename = f"{uuid.uuid4().hex}.{ext}"
+        filepath = os.path.join(UPLOAD_FOLDER, filename)
+        file.save(filepath)
+        
+        # Return the public URL
+        return jsonify({
+            "success": True, 
+            "url": f"/uploads/{filename}"
+        })
+    
+    return jsonify({"success": False, "message": "Định dạng file không được hỗ trợ"}), 400
 
 # News Management Routes
 @admin_bp.route('/news', methods=['POST'])
@@ -186,6 +223,151 @@ def create_artist():
         ''', (name, bio, role_type, avatar_url))
         conn.commit()
         return jsonify({"success": True, "message": "Thêm nghệ sĩ thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/artists/<int:artist_id>', methods=['PUT'])
+def update_artist(artist_id):
+    data = request.json
+    admin_id, error = verify_admin_status(data)
+    if error: return error
+    
+    name = data.get('name')
+    bio = data.get('bio')
+    role_type = data.get('role_type')
+    avatar_url = data.get('avatar_url')
+    
+    if not name:
+        return jsonify({"success": False, "message": "Tên nghệ sĩ không được để trống"}), 400
+        
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('''
+            UPDATE artists 
+            SET name = ?, bio = ?, role_type = ?, avatar_url = ?
+            WHERE id = ?
+        ''', (name, bio, role_type, avatar_url, artist_id))
+        conn.commit()
+        return jsonify({"success": True, "message": "Cập nhật nghệ sĩ thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/artists/<int:artist_id>', methods=['DELETE'])
+def delete_artist(artist_id):
+    # Fallback to query params or headers for DELETE as body is often empty
+    admin_id_fallback = request.args.get('admin_id') or request.headers.get('X-Admin-ID')
+    admin_id, error = verify_admin_status({'admin_id': admin_id_fallback})
+    if error: return error
+         
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        c.execute('DELETE FROM artists WHERE id = ?', (artist_id,))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đã xóa nghệ sĩ"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+# Order & Payment Management Routes
+@admin_bp.route('/orders', methods=['GET'])
+def get_orders():
+    if 'user_role' in session and session['user_role'] != 'admin':
+         return jsonify({"success": False, "message": "Bạn không có quyền truy cập"}), 403
+         
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Query joining orders with user info and aggregating performance titles
+        c.execute('''
+            SELECT 
+                o.order_id, 
+                o.user_id, 
+                o.total_amount, 
+                o.payment_status, 
+                o.payment_method, 
+                o.payment_date,
+                o.created_at,
+                u.full_name as customer_name,
+                u.phone as customer_phone,
+                (SELECT p.title FROM performances p 
+                 JOIN plays pl ON p.id = pl.performance_id 
+                 JOIN tickets t ON pl.id = t.play_id 
+                 JOIN order_details od ON t.id = od.ticket_id 
+                 WHERE od.order_id = o.order_id LIMIT 1) as performance_title,
+                (SELECT pl.start_time FROM plays pl 
+                 JOIN tickets t ON pl.id = t.play_id 
+                 JOIN order_details od ON t.id = od.ticket_id 
+                 WHERE od.order_id = o.order_id LIMIT 1) as showtime
+            FROM orders o
+            JOIN users u ON o.user_id = u.id
+            ORDER BY o.created_at DESC
+        ''')
+        orders = [dict(row) for row in c.fetchall()]
+        return jsonify({"success": True, "orders": orders})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/orders/<string:order_id>/status', methods=['PUT'])
+def update_order_status(order_id):
+    data = request.json
+    admin_id, error = verify_admin_status(data)
+    if error: return error
+    
+    status = data.get('status')
+    if not status:
+        return jsonify({"success": False, "message": "Thiếu trạng thái cập nhật"}), 400
+        
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Update status and set payment_date if paid
+        if status == 'paid':
+            c.execute('''
+                UPDATE orders 
+                SET payment_status = ?, payment_date = datetime('now'), admin_confirmed_by = ?
+                WHERE order_id = ?
+            ''', (status, admin_id, order_id))
+        else:
+            c.execute('''
+                UPDATE orders 
+                SET payment_status = ? 
+                WHERE order_id = ?
+            ''', (status, order_id))
+            
+        conn.commit()
+        return jsonify({"success": True, "message": f"Cập nhật trạng thái {status} thành công!"})
+    except Exception as e:
+        return jsonify({"success": False, "message": str(e)}), 500
+    finally:
+        conn.close()
+
+@admin_bp.route('/orders/<string:order_id>', methods=['DELETE'])
+def delete_order(order_id):
+    admin_id_fallback = request.args.get('admin_id') or request.headers.get('X-Admin-ID')
+    admin_id, error = verify_admin_status({'admin_id': admin_id_fallback})
+    if error: return error
+          
+    conn = get_db_connection()
+    try:
+        c = conn.cursor()
+        # Protection: do not delete paid orders
+        c.execute('SELECT payment_status FROM orders WHERE order_id = ?', (order_id,))
+        order = c.fetchone()
+        if order and order['payment_status'] == 'paid':
+            return jsonify({"success": False, "message": "Không thể xóa đơn hàng đã thanh toán"}), 400
+
+        c.execute('DELETE FROM orders WHERE order_id = ?', (order_id,))
+        conn.commit()
+        return jsonify({"success": True, "message": "Đã xóa đơn hàng"})
     except Exception as e:
         return jsonify({"success": False, "message": str(e)}), 500
     finally:

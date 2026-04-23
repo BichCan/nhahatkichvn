@@ -8,6 +8,7 @@ const ArtistManagement = () => {
     const [artists, setArtists] = useState([]);
     const [loading, setLoading] = useState(true);
     const [isModalOpen, setIsModalOpen] = useState(false);
+    const [selectedArtist, setSelectedArtist] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
     const fetchArtists = async () => {
@@ -26,6 +27,38 @@ const ArtistManagement = () => {
     useEffect(() => {
         fetchArtists();
     }, []);
+
+    const handleDeleteArtist = async (id) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa nghệ sĩ này?')) return;
+        
+        try {
+            const response = await fetch(`${API_URL}/api/admin/artists/${id}`, {
+                method: 'DELETE',
+                headers: {
+                    'X-Admin-ID': '1' // Fallback fallback ID
+                }
+            });
+            const data = await response.json();
+            if (data.success) {
+                fetchArtists();
+            } else {
+                alert(data.message);
+            }
+        } catch (error) {
+            console.error('Error deleting artist:', error);
+            alert('Lỗi khi xóa nghệ sĩ.');
+        }
+    };
+
+    const handleEditArtist = (artist) => {
+        setSelectedArtist(artist);
+        setIsModalOpen(true);
+    };
+
+    const handleAddNew = () => {
+        setSelectedArtist(null);
+        setIsModalOpen(true);
+    };
 
     const filteredArtists = artists.filter(item => 
         item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -46,7 +79,7 @@ const ArtistManagement = () => {
                     </div>
                 </div>
                 <button 
-                    onClick={() => setIsModalOpen(true)}
+                    onClick={handleAddNew}
                     className="flex items-center justify-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-red-600/20 active:scale-95 whitespace-nowrap"
                 >
                     <FaPlus /> Thêm nghệ sĩ mới
@@ -71,7 +104,12 @@ const ArtistManagement = () => {
             </div>
 
             {/* Content Section */}
-            <ArtistList artists={filteredArtists} loading={loading} />
+            <ArtistList 
+                artists={filteredArtists} 
+                loading={loading} 
+                onEdit={handleEditArtist}
+                onDelete={handleDeleteArtist}
+            />
 
             {/* Footer Attribution (Matched with design screenshot) */}
             <div className="mt-16 pt-8 border-t border-white/5 flex items-center justify-center text-center">
@@ -85,6 +123,7 @@ const ArtistManagement = () => {
                 isOpen={isModalOpen} 
                 onClose={() => setIsModalOpen(false)} 
                 onRefresh={fetchArtists}
+                artistData={selectedArtist}
             />
         </div>
     );
