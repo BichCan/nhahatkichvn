@@ -3,7 +3,99 @@ import PaymentList from './components/PaymentList';
 import UpdatePaymentModal from './components/UpdatePaymentModal';
 import OrderDetailModal from './components/OrderDetailModal';
 import API_URL from '../../config/api';
-import { FaSearch, FaFilter, FaRedo, FaFileExport } from 'react-icons/fa';
+import { FaSearch, FaRedo, FaFileExport } from 'react-icons/fa';
+import jsPDF from 'jspdf';
+import autoTable from 'jspdf-autotable';
+
+// ── Normalize Vietnamese diacritics for jsPDF (latin-1 font only) ──
+const vn = (str) => {
+    if (!str) return '';
+    return str.normalize('NFD').replace(/[\u0300-\u036f]/g, '')
+              .replace(/đ/g, 'd').replace(/Đ/g, 'D');
+};
+
+const formatCurrencyPDF = (amount) => {
+    if (!amount) return '0 VND';
+    const num = parseFloat(amount);
+    if (num >= 1000000) return `${(num / 1000000).toFixed(1).replace('.0', '')} Tr VND`;
+    if (num >= 1000) return `${Math.round(num / 1000)} K VND`;
+    return `${num} VND`;
+};
+
+const statusLabel = (status) => {
+    switch (status?.toLowerCase()) {
+        case 'paid':      return 'Da thanh toan';
+        case 'pending':   return 'Cho xu ly';
+        case 'cancelled': return 'Da huy';
+        default: return vn(status || '-');
+    }
+};
+
+const exportPaymentsPDF = (payments) => {
+    const doc = new jsPDF({ orientation: 'landscape', unit: 'mm', format: 'a4' });
+
+    // ── Header ──
+    doc.setFillColor(112, 12, 30);
+    doc.rect(0, 0, 297, 22, 'F');
+    doc.setTextColor(255, 255, 255);
+    doc.setFontSize(14);
+    doc.setFont('helvetica', 'bold');
+    doc.text('NHA HAT KICH VIET NAM', 14, 10);
+    doc.setFontSize(9);
+    doc.setFont('helvetica', 'normal');
+    doc.text('BAO CAO QUAN LY THANH TOAN', 14, 17);
+
+    const now = new Date().toLocaleString('vi-VN');
+    doc.setFontSize(8);
+    doc.text(`Xuat ngay: ${vn(now)}`, 297 - 14, 17, { align: 'right' });
+
+    // ── Table ──
+    autoTable(doc, {
+        startY: 27,
+        head: [['Ma Don', 'Khach Hang', 'SDT', 'Vo Dien', 'Tong Tien', 'Phuong Thuc', 'Trang Thai', 'Ngay Tao']],
+        body: payments.map(p => [
+            p.order_id || '-',
+            vn(p.customer_name),
+            p.customer_phone || '-',
+            vn(p.performance_title || 'N/A'),
+            formatCurrencyPDF(p.total_amount),
+            p.payment_method === 'cash' ? 'Tien mat' : vn(p.payment_method || '-'),
+            statusLabel(p.payment_status),
+            p.created_at ? new Date(p.created_at).toLocaleDateString('vi-VN') : '-'
+        ]),
+        headStyles: {
+            fillColor: [112, 12, 30],
+            textColor: [255, 255, 255],
+            fontStyle: 'bold',
+            fontSize: 8,
+        },
+        bodyStyles: { fontSize: 7.5, cellPadding: 2.5 },
+        alternateRowStyles: { fillColor: [252, 248, 248] },
+        columnStyles: {
+            0: { cellWidth: 38 },
+            4: { halign: 'right' },
+            6: { halign: 'center' },
+        },
+        didParseCell(data) {
+            if (data.section === 'body' && data.column.index === 6) {
+                const v = data.cell.raw;
+                if (v === 'Da thanh toan') data.cell.styles.textColor = [5, 150, 105];
+                else if (v === 'Cho xu ly') data.cell.styles.textColor = [180, 120, 0];
+                else if (v === 'Da huy') data.cell.styles.textColor = [120, 120, 120];
+            }
+        },
+        margin: { left: 14, right: 14 },
+    });
+
+    // ── Footer ──
+    const finalY = doc.lastAutoTable.finalY + 6;
+    doc.setFontSize(8);
+    doc.setTextColor(150, 150, 150);
+    doc.text(`Tong so don hang: ${payments.length}`, 14, finalY);
+    doc.text('Tai lieu duoc tao tu dong - He thong quan tri Nha Hat Kich Viet Nam', 297 / 2, finalY, { align: 'center' });
+
+    doc.save(`payments_${Date.now()}.pdf`);
+};
 
 const PaymentManagement = () => {
     const [payments, setPayments] = useState([]);
@@ -102,62 +194,64 @@ const PaymentManagement = () => {
     };
 
     return (
-        <div className="max-w-[1600px] mx-auto animate-fadeIn pb-20">
+        <div className="mx-auto animate-fadeIn pb-12">
             {/* Header Section */}
-            <div className="mb-10">
-                <div className="flex flex-col md:flex-row md:items-end justify-between gap-6">
+            <div className="mb-6">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
                     <div>
-                        <div className="flex items-center gap-3 mb-2">
-                            <span className="w-8 h-[2px] bg-[#700c1e]"></span>
-                            <span className="text-[10px] font-black text-[#700c1e] uppercase tracking-[0.3em]">Hệ thống kế toán</span>
+                        <div className="flex items-center gap-2 mb-1">
+                            <span className="w-5 h-[2px] bg-[#700c1e]"></span>
+                            <span className="text-[9px] font-black text-[#700c1e] uppercase tracking-[0.25em]">Hệ thống kế toán</span>
                         </div>
-                        <h1 className="text-4xl font-black text-gray-900 tracking-tight leading-none mb-3 uppercase">QUẢN LÝ THANH TOÁN</h1>
-                        <p className="text-gray-400 font-serif italic text-lg leading-relaxed max-w-2xl">
+                        <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1 uppercase">QUẢN LÝ THANH TOÁN</h1>
+                        <p className="text-gray-400 text-xs leading-relaxed">
                             Theo dõi và xác nhận các giao dịch đặt vé xem kịch.
                         </p>
                     </div>
                     
-                    <div className="flex items-center gap-3">
-                         <button 
+                    <div className="flex items-center gap-2">
+                        <button 
                             onClick={fetchPayments}
-                            className="p-4 bg-white border border-gray-100 rounded-2xl text-gray-400 hover:text-[#700c1e] hover:border-[#700c1e]/20 transition-all shadow-sm"
+                            className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-[#700c1e] hover:border-[#700c1e]/20 transition-all shadow-sm text-xs"
                             title="Tải lại dữ liệu"
                         >
-                            <FaRedo className={loading ? 'animate-spin' : ''} />
+                            <FaRedo size={13} className={loading ? 'animate-spin' : ''} />
                         </button>
-                        <button className="flex items-center gap-2 px-6 py-4 bg-white border border-gray-100 rounded-2xl text-gray-600 font-bold text-sm hover:bg-gray-50 transition-all shadow-sm">
-                            <FaFileExport className="text-[#700c1e]" /> XUẤT BÁO CÁO
+                        <button className="flex items-center gap-1.5 px-4 py-2.5 bg-white border border-gray-100 rounded-xl text-gray-600 font-bold text-xs hover:bg-gray-50 transition-all shadow-sm"
+                            onClick={() => exportPaymentsPDF(filteredPayments)}
+                        >
+                            <FaFileExport size={12} className="text-[#700c1e]" /> Xuất báo cáo
                         </button>
                     </div>
                 </div>
             </div>
 
             {/* Filter & Search Bar */}
-            <div className="grid grid-cols-1 lg:grid-cols-[1fr_auto] gap-6 mb-8">
-                <div className="relative group">
-                    <FaSearch className="absolute left-6 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#700c1e] transition-colors" />
+            <div className="flex flex-col sm:flex-row gap-3 mb-5">
+                <div className="relative group flex-1">
+                    <FaSearch size={12} className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-300 group-focus-within:text-[#700c1e] transition-colors" />
                     <input 
                         type="text" 
-                        placeholder="Tìm kiếm theo mã đơn hàng, khách hàng hoặc số điện thoại..."
+                        placeholder="Tìm kiếm mã đơn, khách hàng, số điện thoại..."
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
-                        className="w-full bg-white border border-gray-100 rounded-2xl py-5 pl-14 pr-6 text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-4 focus:ring-[#700c1e]/5 focus:border-[#700c1e]/20 transition-all font-medium shadow-sm"
+                        className="w-full bg-white border border-gray-100 rounded-xl py-2.5 pl-10 pr-4 text-xs text-gray-900 placeholder:text-gray-300 focus:outline-none focus:ring-2 focus:ring-[#700c1e]/10 focus:border-[#700c1e]/30 transition-all font-medium shadow-sm"
                     />
                 </div>
 
-                <div className="flex bg-white p-1.5 rounded-2xl border border-gray-100 shadow-sm">
+                <div className="flex bg-white p-1 rounded-xl border border-gray-100 shadow-sm gap-0.5 flex-shrink-0">
                     {[
                         { id: 'all', label: 'Tất cả' },
-                        { id: 'paid', label: 'Đã thanh toán' },
-                        { id: 'pending', label: 'Chờ xử lý' },
+                        { id: 'paid', label: 'Đã TT' },
+                        { id: 'pending', label: 'Chờ' },
                         { id: 'cancelled', label: 'Đã hủy' }
                     ].map((tab) => (
                         <button
                             key={tab.id}
                             onClick={() => setActiveTab(tab.id)}
-                            className={`px-8 py-3.5 rounded-xl text-sm font-black uppercase tracking-widest transition-all ${
+                            className={`px-3 py-2 rounded-lg text-[11px] font-black uppercase tracking-wide transition-all ${
                                 activeTab === tab.id 
-                                ? 'bg-[#700c1e] text-white shadow-lg shadow-[#700c1e]/20' 
+                                ? 'bg-[#700c1e] text-white shadow shadow-[#700c1e]/20' 
                                 : 'text-gray-400 hover:text-gray-600 hover:bg-gray-50'
                             }`}
                         >
