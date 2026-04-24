@@ -9,10 +9,14 @@ import API_URL from '../../../config/api';
 
 const socket = io(API_URL);
 
-export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, performanceId, selectedDate, selectedTime }) {
-    const [selectedSeats, setSelectedSeats] = useState([]);
+export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, performanceId, selectedDate, selectedTime, selectedSeats: initialSelectedSeats = [] }) {
+    const [selectedSeats, setSelectedSeats] = useState(initialSelectedSeats);
     const [realTimeSeats, setRealTimeSeats] = useState({ booked: [], holding: {} });
     const [dbSeats, setDbSeats] = useState([]);
+    
+    useEffect(() => {
+        setSelectedSeats(initialSelectedSeats || []);
+    }, [initialSelectedSeats]);
     
     // Get user info safely
     let currentUser = null;
@@ -63,7 +67,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
     // Tính tổng tiền
     const calculateTotal = () => {
         return selectedSeats.reduce((total, seatId) => {
-            const row = seatId.charAt(0);
+            const row = String(seatId).charAt(0);
             
             // Xác định loại ghế
             const isVipRow = ['C', 'D', 'E'].includes(row) || 
@@ -89,9 +93,13 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
         // Kiểm tra trong danh sách đã đặt (Postgres/SQLite)
         if (booked.includes(seatId)) return true;
         
-        // Kiểm tra trong danh sách đang giữ (Redis)
+        // Kiểm tra trong danh sách đang giữ
         if (holding[seatId]) {
+            const holder = holding[seatId];
             // Nếu là chính mình giữ thì không coi là occupied để có thể bỏ chọn
+            if (holder && String(holder.user_id) === String(currentUserId)) {
+                return false;
+            }
             return true;
         }
 
@@ -225,7 +233,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
     // Tính tổng tiền với danh sách ghế mới
     const calculateTotalWithNewList = (seatList) => {
         return seatList.reduce((total, seatId) => {
-            const row = seatId.charAt(0);
+            const row = String(seatId).charAt(0);
             const isVipRow = ['C', 'D', 'E'].includes(row) || 
                             seatsData.secondaryRows.default.includes(row) ||
                             seatsData.secondaryRows.extended.includes(row);
@@ -247,7 +255,7 @@ export default function SeatMap({ onSeatsChange, maxSeats = 10, onSelectSeats, p
     // Lấy thông tin chi tiết của ghế đã chọn
     const getSelectedSeatsInfo = () => {
         return selectedSeats.map(seatId => {
-            const row = seatId.charAt(0);
+            const row = String(seatId).charAt(0);
             const number = parseInt(seatId.slice(1));
             const isVip = ['C', 'D', 'E'].includes(row) || 
                          seatsData.secondaryRows.default.includes(row) ||

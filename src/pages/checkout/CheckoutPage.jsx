@@ -66,7 +66,7 @@ export default function CheckoutPage() {
             const ticketCode = `NTK-${performance?.id || "00"}-${seat.row || ""}${seat.number || seat.id || ""}-${(now + idx).toString().slice(-7)}`;
             return {
                 performance_id: performance.id,
-                seat_id: seat.id.toString(),
+                seat_id: seat.db_id || seat.id,
                 seat_row: seat.row,
                 seat_number: seat.number.toString(),
                 show_date: selectedDate,

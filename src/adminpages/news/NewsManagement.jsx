@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { FaPlus, FaSearch, FaFilter } from 'react-icons/fa';
 import NewsStats from './components/NewsStats';
 import NewsTable from './components/NewsTable';
-import AddNewsModal from './components/AddNewsModal';
 import API_URL from '../../config/api';
 
 const NewsManagement = () => {
@@ -11,6 +11,7 @@ const NewsManagement = () => {
     const [isModalOpen, setIsModalOpen] = useState(false);
     const [searchTerm, setSearchTerm] = useState('');
     const [editingNews, setEditingNews] = useState(null);
+    const navigate = useNavigate();
 
     const fetchNews = async () => {
         setLoading(true);
@@ -52,8 +53,7 @@ const NewsManagement = () => {
     };
 
     const handleEdit = (item) => {
-        setEditingNews(item);
-        setIsModalOpen(true);
+        navigate(`/admin/news/update/${item.id}`);
     };
 
     const handleDelete = async (newsId) => {
@@ -97,7 +97,7 @@ const NewsManagement = () => {
                     <p className="text-slate-500 text-sm font-medium">Cập nhật và điều phối nội dung truyền thông cho Nhà hát kịch Việt Nam.</p>
                 </div>
                 <button 
-                    onClick={() => { setEditingNews(null); setIsModalOpen(true); }}
+                    onClick={() => navigate('/admin/news/create')}
                     className="flex items-center justify-center gap-2 px-6 py-3 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-red-600/20 active:scale-95"
                 >
                     <FaPlus /> Thêm bài viết mới
@@ -105,7 +105,7 @@ const NewsManagement = () => {
             </div>
 
             {/* Stats Overview */}
-            <NewsStats />
+            {/* <NewsStats /> */}
 
             {/* Filters & Actions */}
             <div className="flex flex-col md:flex-row gap-4 mb-6">
@@ -134,14 +134,6 @@ const NewsManagement = () => {
                     onToggleStatus={handleToggleStatus}
                 />
             </div>
-
-            {/* Modal */}
-            <AddNewsModal 
-                isOpen={isModalOpen} 
-                onClose={handleCloseModal} 
-                onRefresh={fetchNews}
-                initialData={editingNews}
-            />
         </div>
     );
 };

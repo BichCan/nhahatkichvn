@@ -1,0 +1,1362 @@
+{
+  "6B3D83A2": {
+    "tickets": [],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260418-6B3D83A2",
+        "user_id": 11,
+        "total_amount": 500000,
+        "payment_status": "cancelled",
+        "payment_method": "cash",
+        "payment_date": "2026-04-18 00:06:53",
+        "admin_confirmed_by": null,
+        "expired_at": null,
+        "note": null,
+        "created_at": "2026-04-18 00:06:53",
+        "updated_at": "2026-04-18 00:06:53"
+      }
+    ],
+    "order_details": []
+  },
+  "B2C0E7F4": {
+    "tickets": [],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260407-B2C0E7F4",
+        "user_id": 3,
+        "total_amount": 500000,
+        "payment_status": "cancelled",
+        "payment_method": "cash",
+        "payment_date": "2026-04-07 14:41:17",
+        "admin_confirmed_by": null,
+        "expired_at": null,
+        "note": null,
+        "created_at": "2026-04-07 14:41:17",
+        "updated_at": "2026-04-07 14:41:17"
+      }
+    ],
+    "order_details": []
+  },
+  "4956B3E8": {
+    "tickets": [],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260405-4956B3E8",
+        "user_id": 3,
+        "total_amount": 500000,
+        "payment_status": "cancelled",
+        "payment_method": "cash",
+        "payment_date": "2026-04-05 10:19:35",
+        "admin_confirmed_by": null,
+        "expired_at": null,
+        "note": null,
+        "created_at": "2026-04-05 10:19:35",
+        "updated_at": "2026-04-05 10:19:35"
+      }
+    ],
+    "order_details": []
+  },
+  "6FF89E06": {
+    "tickets": [],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260405-6FF89E06",
+        "user_id": 3,
+        "total_amount": 500000,
+        "payment_status": "cancelled",
+        "payment_method": "cash",
+        "payment_date": "2026-04-05 00:23:19",
+        "admin_confirmed_by": null,
+        "expired_at": null,
+        "note": null,
+        "created_at": "2026-04-05 00:23:19",
+        "updated_at": "2026-04-05 00:23:19"
+      }
+    ],
+    "order_details": []
+  },
+  "03007107": {
+    "tickets": [],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260405-03007107",
+        "user_id": 3,
+        "total_amount": 500000,
+        "payment_status": "cancelled",
+        "payment_method": "cash",
+        "payment_date": "2026-04-05 00:18:40",
+        "admin_confirmed_by": null,
+        "expired_at": null,
+        "note": null,
+        "created_at": "2026-04-05 00:18:40",
+        "updated_at": "2026-04-05 00:18:40"
+      }
+    ],
+    "order_details": []
+  },
+  "001": {
+    "tickets": [
+      {
+        "id": 1,
+        "play_id": 7,
+        "seat_id": 1,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260110-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 2,
+        "play_id": 7,
+        "seat_id": 2,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260110-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 6,
+        "play_id": 7,
+        "seat_id": 6,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260201-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 7,
+        "play_id": 7,
+        "seat_id": 7,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260201-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 8,
+        "play_id": 7,
+        "seat_id": 8,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 9,
+        "play_id": 7,
+        "seat_id": 9,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 10,
+        "play_id": 7,
+        "seat_id": 10,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260225-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 11,
+        "play_id": 7,
+        "seat_id": 11,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260225-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 12,
+        "play_id": 7,
+        "seat_id": 12,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260225-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 13,
+        "play_id": 11,
+        "seat_id": 13,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260115-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 14,
+        "play_id": 11,
+        "seat_id": 14,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260115-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 15,
+        "play_id": 11,
+        "seat_id": 15,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260115-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 16,
+        "play_id": 11,
+        "seat_id": 16,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 17,
+        "play_id": 11,
+        "seat_id": 17,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 18,
+        "play_id": 11,
+        "seat_id": 18,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260205-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 19,
+        "play_id": 11,
+        "seat_id": 19,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260205-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 20,
+        "play_id": 11,
+        "seat_id": 20,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260218-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 21,
+        "play_id": 11,
+        "seat_id": 21,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260218-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 22,
+        "play_id": 11,
+        "seat_id": 22,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260218-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 23,
+        "play_id": 11,
+        "seat_id": 23,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260302-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 24,
+        "play_id": 11,
+        "seat_id": 24,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260302-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 25,
+        "play_id": 11,
+        "seat_id": 25,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260302-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 26,
+        "play_id": 11,
+        "seat_id": 26,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260302-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 29,
+        "play_id": 3,
+        "seat_id": 29,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260310-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 30,
+        "play_id": 3,
+        "seat_id": 30,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260310-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 31,
+        "play_id": 3,
+        "seat_id": 31,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260310-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 36,
+        "play_id": 5,
+        "seat_id": 36,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 37,
+        "play_id": 5,
+        "seat_id": 37,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 38,
+        "play_id": 5,
+        "seat_id": 38,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 47,
+        "play_id": 8,
+        "seat_id": 47,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260305-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 48,
+        "play_id": 8,
+        "seat_id": 48,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260305-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 49,
+        "play_id": 8,
+        "seat_id": 49,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260305-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 50,
+        "play_id": 8,
+        "seat_id": 50,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260312-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 51,
+        "play_id": 8,
+        "seat_id": 51,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260312-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 52,
+        "play_id": 8,
+        "seat_id": 52,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260312-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 53,
+        "play_id": 8,
+        "seat_id": 53,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260312-001",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      }
+    ],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260110-001",
+        "user_id": 2,
+        "total_amount": 1080000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-01-10 14:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-01-15 20:00:00",
+        "note": "Đã thanh toán 2 ghế VIP",
+        "created_at": "2026-01-10 14:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260118-001",
+        "user_id": 3,
+        "total_amount": 1296000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-01-18 19:15:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-01-22 20:00:00",
+        "note": "Đã thanh toán 1 VIP + 2 thường",
+        "created_at": "2026-01-18 19:15:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260201-001",
+        "user_id": 4,
+        "total_amount": 918000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-01 10:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-05 15:00:00",
+        "note": "Đã thanh toán 1 VIP + 1 thường",
+        "created_at": "2026-02-01 10:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260215-001",
+        "user_id": 5,
+        "total_amount": 1080000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-15 20:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-18 20:00:00",
+        "note": "Đã thanh toán 2 ghế VIP",
+        "created_at": "2026-02-15 20:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260225-001",
+        "user_id": 6,
+        "total_amount": 1134000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-25 16:45:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-28 20:00:00",
+        "note": "Đã thanh toán 3 ghế thường",
+        "created_at": "2026-02-25 16:45:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260115-001",
+        "user_id": 7,
+        "total_amount": 1458000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-01-15 11:20:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-01-20 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 1 thường",
+        "created_at": "2026-01-15 11:20:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260125-001",
+        "user_id": 8,
+        "total_amount": 1080000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-01-25 15:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-01-28 20:00:00",
+        "note": "Đã thanh toán 2 ghế VIP",
+        "created_at": "2026-01-25 15:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260205-001",
+        "user_id": 9,
+        "total_amount": 756000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-05 09:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-10 15:00:00",
+        "note": "Đã thanh toán 2 ghế thường",
+        "created_at": "2026-02-05 09:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260218-001",
+        "user_id": 10,
+        "total_amount": 1620000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-18 14:15:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-22 20:00:00",
+        "note": "Đã thanh toán 3 ghế VIP",
+        "created_at": "2026-02-18 14:15:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260302-001",
+        "user_id": 2,
+        "total_amount": 1512000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-02 18:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-05 20:00:00",
+        "note": "Đã thanh toán 4 ghế thường",
+        "created_at": "2026-03-02 18:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260310-001",
+        "user_id": 4,
+        "total_amount": 1458000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-10 16:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-14 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 1 thường",
+        "created_at": "2026-03-10 16:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260220-001",
+        "user_id": 6,
+        "total_amount": 1296000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-20 15:45:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-27 20:00:00",
+        "note": "Đã thanh toán 1 VIP + 2 thường",
+        "created_at": "2026-02-20 15:45:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260305-001",
+        "user_id": 9,
+        "total_amount": 1296000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-05 14:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-10 20:00:00",
+        "note": "Đã thanh toán 1 VIP + 2 thường",
+        "created_at": "2026-03-05 14:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260312-001",
+        "user_id": 10,
+        "total_amount": 1998000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-12 18:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-17 20:00:00",
+        "note": "Đã thanh toán 3 VIP + 1 thường",
+        "created_at": "2026-03-12 18:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260301-001",
+        "user_id": 3,
+        "total_amount": 1674000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-01 11:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-08 20:00:00",
+        "note": "Đã thanh toán 1 VIP + 3 thường",
+        "created_at": "2026-03-01 11:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260313-001",
+        "user_id": 4,
+        "total_amount": 1512000,
+        "payment_status": "cancelled",
+        "payment_method": null,
+        "payment_date": null,
+        "admin_confirmed_by": null,
+        "expired_at": "2026-03-15 20:00:00",
+        "note": "Chờ thanh toán 4 ghế thường",
+        "created_at": "2026-03-13 10:00:00",
+        "updated_at": "2026-03-13 10:00:00"
+      },
+      {
+        "order_id": "ORD-20260314-001",
+        "user_id": 6,
+        "total_amount": 1080000,
+        "payment_status": "cancelled",
+        "payment_method": null,
+        "payment_date": null,
+        "admin_confirmed_by": null,
+        "expired_at": "2026-04-05 15:00:00",
+        "note": "Chờ thanh toán 2 ghế VIP",
+        "created_at": "2026-03-14 09:00:00",
+        "updated_at": "2026-03-14 09:00:00"
+      }
+    ],
+    "order_details": [
+      {
+        "id": 62,
+        "order_id": "ORD-20260110-001",
+        "ticket_id": 1,
+        "price": 500000
+      },
+      {
+        "id": 63,
+        "order_id": "ORD-20260110-001",
+        "ticket_id": 2,
+        "price": 500000
+      },
+      {
+        "id": 67,
+        "order_id": "ORD-20260201-001",
+        "ticket_id": 6,
+        "price": 500000
+      },
+      {
+        "id": 68,
+        "order_id": "ORD-20260201-001",
+        "ticket_id": 7,
+        "price": 350000
+      },
+      {
+        "id": 69,
+        "order_id": "ORD-20260215-001",
+        "ticket_id": 8,
+        "price": 500000
+      },
+      {
+        "id": 70,
+        "order_id": "ORD-20260215-001",
+        "ticket_id": 9,
+        "price": 500000
+      },
+      {
+        "id": 71,
+        "order_id": "ORD-20260225-001",
+        "ticket_id": 10,
+        "price": 350000
+      },
+      {
+        "id": 72,
+        "order_id": "ORD-20260225-001",
+        "ticket_id": 11,
+        "price": 350000
+      },
+      {
+        "id": 73,
+        "order_id": "ORD-20260225-001",
+        "ticket_id": 12,
+        "price": 350000
+      },
+      {
+        "id": 74,
+        "order_id": "ORD-20260115-001",
+        "ticket_id": 13,
+        "price": 500000
+      },
+      {
+        "id": 75,
+        "order_id": "ORD-20260115-001",
+        "ticket_id": 14,
+        "price": 500000
+      },
+      {
+        "id": 76,
+        "order_id": "ORD-20260115-001",
+        "ticket_id": 15,
+        "price": 350000
+      },
+      {
+        "id": 77,
+        "order_id": "ORD-20260125-001",
+        "ticket_id": 16,
+        "price": 500000
+      },
+      {
+        "id": 78,
+        "order_id": "ORD-20260125-001",
+        "ticket_id": 17,
+        "price": 500000
+      },
+      {
+        "id": 79,
+        "order_id": "ORD-20260205-001",
+        "ticket_id": 18,
+        "price": 350000
+      },
+      {
+        "id": 80,
+        "order_id": "ORD-20260205-001",
+        "ticket_id": 19,
+        "price": 350000
+      },
+      {
+        "id": 81,
+        "order_id": "ORD-20260218-001",
+        "ticket_id": 20,
+        "price": 500000
+      },
+      {
+        "id": 82,
+        "order_id": "ORD-20260218-001",
+        "ticket_id": 21,
+        "price": 500000
+      },
+      {
+        "id": 83,
+        "order_id": "ORD-20260218-001",
+        "ticket_id": 22,
+        "price": 500000
+      },
+      {
+        "id": 84,
+        "order_id": "ORD-20260302-001",
+        "ticket_id": 23,
+        "price": 350000
+      },
+      {
+        "id": 85,
+        "order_id": "ORD-20260302-001",
+        "ticket_id": 24,
+        "price": 350000
+      },
+      {
+        "id": 86,
+        "order_id": "ORD-20260302-001",
+        "ticket_id": 25,
+        "price": 350000
+      },
+      {
+        "id": 87,
+        "order_id": "ORD-20260302-001",
+        "ticket_id": 26,
+        "price": 350000
+      },
+      {
+        "id": 90,
+        "order_id": "ORD-20260310-001",
+        "ticket_id": 29,
+        "price": 500000
+      },
+      {
+        "id": 91,
+        "order_id": "ORD-20260310-001",
+        "ticket_id": 30,
+        "price": 500000
+      },
+      {
+        "id": 92,
+        "order_id": "ORD-20260310-001",
+        "ticket_id": 31,
+        "price": 350000
+      },
+      {
+        "id": 97,
+        "order_id": "ORD-20260220-001",
+        "ticket_id": 36,
+        "price": 500000
+      },
+      {
+        "id": 98,
+        "order_id": "ORD-20260220-001",
+        "ticket_id": 37,
+        "price": 350000
+      },
+      {
+        "id": 99,
+        "order_id": "ORD-20260220-001",
+        "ticket_id": 38,
+        "price": 350000
+      },
+      {
+        "id": 108,
+        "order_id": "ORD-20260305-001",
+        "ticket_id": 47,
+        "price": 500000
+      },
+      {
+        "id": 109,
+        "order_id": "ORD-20260305-001",
+        "ticket_id": 48,
+        "price": 350000
+      },
+      {
+        "id": 110,
+        "order_id": "ORD-20260305-001",
+        "ticket_id": 49,
+        "price": 350000
+      },
+      {
+        "id": 111,
+        "order_id": "ORD-20260312-001",
+        "ticket_id": 50,
+        "price": 500000
+      },
+      {
+        "id": 112,
+        "order_id": "ORD-20260312-001",
+        "ticket_id": 51,
+        "price": 500000
+      },
+      {
+        "id": 113,
+        "order_id": "ORD-20260312-001",
+        "ticket_id": 52,
+        "price": 500000
+      },
+      {
+        "id": 114,
+        "order_id": "ORD-20260312-001",
+        "ticket_id": 53,
+        "price": 350000
+      }
+    ]
+  },
+  "002": {
+    "tickets": [
+      {
+        "id": 32,
+        "play_id": 5,
+        "seat_id": 32,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 33,
+        "play_id": 5,
+        "seat_id": 33,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 34,
+        "play_id": 5,
+        "seat_id": 34,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 35,
+        "play_id": 5,
+        "seat_id": 35,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260215-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 39,
+        "play_id": 9,
+        "seat_id": 39,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 40,
+        "play_id": 9,
+        "seat_id": 40,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 41,
+        "play_id": 9,
+        "seat_id": 41,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 42,
+        "play_id": 9,
+        "seat_id": 42,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 43,
+        "play_id": 9,
+        "seat_id": 43,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260125-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 44,
+        "play_id": 9,
+        "seat_id": 44,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260205-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 45,
+        "play_id": 9,
+        "seat_id": 45,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260205-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 46,
+        "play_id": 9,
+        "seat_id": 46,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260205-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 54,
+        "play_id": 2,
+        "seat_id": 54,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 55,
+        "play_id": 2,
+        "seat_id": 55,
+        "price": 540000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 56,
+        "play_id": 2,
+        "seat_id": 56,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      },
+      {
+        "id": 57,
+        "play_id": 2,
+        "seat_id": 57,
+        "price": 378000,
+        "status": "paid",
+        "hold_expired_at": null,
+        "held_by_user_id": null,
+        "order_id": "ORD-20260220-002",
+        "created_at": "2026-04-02 01:51:24",
+        "updated_at": "2026-04-04 17:00:25"
+      }
+    ],
+    "bookings": [],
+    "order": null,
+    "orders_found": [
+      {
+        "order_id": "ORD-20260302-002",
+        "user_id": 3,
+        "total_amount": 918000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-03-02 20:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-05 20:00:00",
+        "note": "Đã thanh toán 1 VIP + 1 thường",
+        "created_at": "2026-03-02 20:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260215-002",
+        "user_id": 5,
+        "total_amount": 1836000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-15 12:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-20 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 2 thường",
+        "created_at": "2026-02-15 12:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260125-002",
+        "user_id": 7,
+        "total_amount": 2214000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-01-25 10:30:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-05 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 3 thường",
+        "created_at": "2026-01-25 10:30:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260205-002",
+        "user_id": 8,
+        "total_amount": 1458000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-05 19:00:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-02-15 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 1 thường",
+        "created_at": "2026-02-05 19:00:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260220-002",
+        "user_id": 2,
+        "total_amount": 1836000,
+        "payment_status": "paid",
+        "payment_method": "cash",
+        "payment_date": "2026-02-20 09:15:00",
+        "admin_confirmed_by": 1,
+        "expired_at": "2026-03-01 20:00:00",
+        "note": "Đã thanh toán 2 VIP + 2 thường",
+        "created_at": "2026-02-20 09:15:00",
+        "updated_at": "2026-04-02 01:53:36"
+      },
+      {
+        "order_id": "ORD-20260313-002",
+        "user_id": 5,
+        "total_amount": 1620000,
+        "payment_status": "cancelled",
+        "payment_method": null,
+        "payment_date": null,
+        "admin_confirmed_by": null,
+        "expired_at": "2026-03-22 20:00:00",
+        "note": "Chờ thanh toán 3 ghế VIP",
+        "created_at": "2026-03-13 14:30:00",
+        "updated_at": "2026-03-13 14:30:00"
+      }
+    ],
+    "order_details": [
+      {
+        "id": 93,
+        "order_id": "ORD-20260215-002",
+        "ticket_id": 32,
+        "price": 500000
+      },
+      {
+        "id": 94,
+        "order_id": "ORD-20260215-002",
+        "ticket_id": 33,
+        "price": 500000
+      },
+      {
+        "id": 95,
+        "order_id": "ORD-20260215-002",
+        "ticket_id": 34,
+        "price": 350000
+      },
+      {
+        "id": 96,
+        "order_id": "ORD-20260215-002",
+        "ticket_id": 35,
+        "price": 350000
+      },
+      {
+        "id": 100,
+        "order_id": "ORD-20260125-002",
+        "ticket_id": 39,
+        "price": 500000
+      },
+      {
+        "id": 101,
+        "order_id": "ORD-20260125-002",
+        "ticket_id": 40,
+        "price": 500000
+      },
+      {
+        "id": 102,
+        "order_id": "ORD-20260125-002",
+        "ticket_id": 41,
+        "price": 350000
+      },
+      {
+        "id": 103,
+        "order_id": "ORD-20260125-002",
+        "ticket_id": 42,
+        "price": 350000
+      },
+      {
+        "id": 104,
+        "order_id": "ORD-20260125-002",
+        "ticket_id": 43,
+        "price": 350000
+      },
+      {
+        "id": 105,
+        "order_id": "ORD-20260205-002",
+        "ticket_id": 44,
+        "price": 500000
+      },
+      {
+        "id": 106,
+        "order_id": "ORD-20260205-002",
+        "ticket_id": 45,
+        "price": 500000
+      },
+      {
+        "id": 107,
+        "order_id": "ORD-20260205-002",
+        "ticket_id": 46,
+        "price": 350000
+      },
+      {
+        "id": 115,
+        "order_id": "ORD-20260220-002",
+        "ticket_id": 54,
+        "price": 500000
+      },
+      {
+        "id": 116,
+        "order_id": "ORD-20260220-002",
+        "ticket_id": 55,
+        "price": 500000
+      },
+      {
+        "id": 117,
+        "order_id": "ORD-20260220-002",
+        "ticket_id": 56,
+        "price": 350000
+      },
+      {
+        "id": 118,
+        "order_id": "ORD-20260220-002",
+        "ticket_id": 57,
+        "price": 350000
+      }
+    ]
+  }
+}

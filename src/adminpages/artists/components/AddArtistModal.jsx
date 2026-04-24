@@ -7,7 +7,8 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh, artistData = null }) => {
         name: '',
         role_type: 'actor',
         bio: '',
-        avatar_url: ''
+        avatar_url: '',
+        status: 'ACTIVE'
     });
     const [loading, setLoading] = useState(false);
     const [uploading, setUploading] = useState(false);
@@ -19,14 +20,16 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh, artistData = null }) => {
                 name: artistData.name || '',
                 role_type: artistData.role_type || 'actor',
                 bio: artistData.bio || '',
-                avatar_url: artistData.avatar_url || ''
+                avatar_url: artistData.avatar_url || '',
+                status: artistData.status || 'ACTIVE'
             });
         } else {
             setFormData({
                 name: '',
                 role_type: 'actor',
                 bio: '',
-                avatar_url: ''
+                avatar_url: '',
+                status: 'ACTIVE'
             });
         }
         setMessage('');
@@ -74,14 +77,21 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh, artistData = null }) => {
             ? `${API_URL}/api/admin/artists/${artistData.id}`
             : `${API_URL}/api/admin/artists`;
 
+        const userStr = localStorage.getItem('user');
+        let admin_id = '1';
+        if (userStr) {
+            try { admin_id = JSON.parse(userStr).id; } catch (e) {}
+        }
+
         try {
             const response = await fetch(url, {
                 method,
                 headers: {
                     'Content-Type': 'application/json',
-                    'X-Admin-ID': '1' // Basic fallback
+                    'X-Admin-ID': admin_id
                 },
-                body: JSON.stringify(formData)
+                body: JSON.stringify(formData),
+                credentials: 'include'
             });
 
             const data = await response.json();
@@ -189,6 +199,23 @@ const AddArtistModal = ({ isOpen, onClose, onRefresh, artistData = null }) => {
                                         <option value="director">Đạo diễn</option>
                                         <option value="musician">Nhạc công</option>
                                         <option value="other">Khác</option>
+                                    </select>
+                                    <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
+                                        <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>
+                                    </div>
+                                </div>
+                            </div>
+
+                            <div className="space-y-1.5">
+                                <label className="text-[10px] font-black text-gray-400 uppercase tracking-widest">Trạng thái</label>
+                                <div className="relative">
+                                    <select
+                                        value={formData.status}
+                                        onChange={(e) => setFormData({ ...formData, status: e.target.value })}
+                                        className="w-full bg-white border border-gray-200 rounded-lg px-4 py-3 text-sm text-gray-900 appearance-none focus:outline-none focus:border-[#700c1e] transition-all shadow-sm"
+                                    >
+                                        <option value="ACTIVE">Đang hoạt động</option>
+                                        <option value="INACTIVE">Không hoạt động</option>
                                     </select>
                                     <div className="absolute right-4 top-1/2 -translate-y-1/2 pointer-events-none text-gray-400">
                                         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M19 9l-7 7-7-7"></path></svg>

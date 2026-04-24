@@ -30,7 +30,7 @@ export default function NewsPage() {
 
             {/* Grid: 1 cột mobile, 2 cột tablet, 3 cột desktop */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 md:gap-8">
-                {newsData.map((item) => (
+                {newsData.filter(item => item.is_published).map((item) => (
                     <NewsBox key={item.id} news={item} />
                 ))}
             </div>

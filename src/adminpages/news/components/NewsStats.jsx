@@ -17,7 +17,7 @@ const NewsStats = () => {
                     </div>
                     <div>
                         <p className="text-gray-500 text-xs uppercase tracking-wider font-bold mb-1">{stat.label}</p>
-                        <h3 className="text-3xl font-bold text-white tracking-tight">{stat.value}</h3>
+                        <h3 className="text-3xl font-bold text-black tracking-tight">{stat.value}</h3>
                     </div>
                 </div>
             ))}

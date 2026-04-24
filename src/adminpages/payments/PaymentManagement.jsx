@@ -1,9 +1,10 @@
 import React, { useState, useEffect } from 'react';
+import { useNavigate } from 'react-router-dom';
 import PaymentList from './components/PaymentList';
 import UpdatePaymentModal from './components/UpdatePaymentModal';
 import OrderDetailModal from './components/OrderDetailModal';
 import API_URL from '../../config/api';
-import { FaSearch, FaRedo, FaFileExport } from 'react-icons/fa';
+import { FaSearch, FaRedo, FaFileExport, FaPlus } from 'react-icons/fa';
 import jsPDF from 'jspdf';
 import autoTable from 'jspdf-autotable';
 
@@ -125,7 +126,6 @@ const PaymentManagement = () => {
     useEffect(() => {
         fetchPayments();
     }, []);
-
     const filteredPayments = payments.filter(payment => {
         const matchesSearch = 
             payment.order_id.toLowerCase().includes(searchTerm.toLowerCase()) ||
@@ -145,6 +145,10 @@ const PaymentManagement = () => {
     const handleViewDetail = (payment) => {
         setViewPayment(payment);
         setIsDetailOpen(true);
+    };
+
+    const handleEditOrder = (payment) => {
+        navigate(`/admin/payments/update/${payment.order_id}`);
     };
 
     const handleReject = async (payment) => {
@@ -193,6 +197,8 @@ const PaymentManagement = () => {
         }
     };
 
+    const navigate = useNavigate();
+
     return (
         <div className="mx-auto animate-fadeIn pb-12">
             {/* Header Section */}
@@ -203,13 +209,21 @@ const PaymentManagement = () => {
                             <span className="w-5 h-[2px] bg-[#700c1e]"></span>
                             <span className="text-[9px] font-black text-[#700c1e] uppercase tracking-[0.25em]">Hệ thống kế toán</span>
                         </div>
-                        <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1 uppercase">QUẢN LÝ THANH TOÁN</h1>
+                        <h1 className="text-xl font-black text-gray-900 tracking-tight leading-none mb-1 uppercase">QUẢN LÝ ĐẶT VÉ</h1>
                         <p className="text-gray-400 text-xs leading-relaxed">
                             Theo dõi và xác nhận các giao dịch đặt vé xem kịch.
                         </p>
+
                     </div>
                     
                     <div className="flex items-center gap-2">
+                        <button 
+                            onClick={() => navigate('/admin/payments/add')}
+                            className="flex items-center gap-2 px-5 py-2.5 bg-[#700c1e] text-white rounded-lg text-xs font-bold shadow-lg shadow-[#700c1e]/20 hover:bg-[#5a0a18] transition-all active:scale-95"
+                        >
+                            <FaPlus size={10} />
+                            <span>Thêm đơn hàng</span>
+                        </button>
                         <button 
                             onClick={fetchPayments}
                             className="p-2.5 bg-white border border-gray-100 rounded-xl text-gray-400 hover:text-[#700c1e] hover:border-[#700c1e]/20 transition-all shadow-sm text-xs"
@@ -282,6 +296,7 @@ const PaymentManagement = () => {
                 isOpen={isDetailOpen}
                 onClose={() => setIsDetailOpen(false)}
                 payment={viewPayment}
+                onEdit={handleEditOrder}
             />
         </div>
     );
