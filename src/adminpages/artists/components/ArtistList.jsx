@@ -1,7 +1,7 @@
 import React from 'react';
 import { FaEdit, FaTrash, FaEye, FaUser } from 'react-icons/fa';
 
-const ArtistList = ({ artists, loading, onEdit, onDelete }) => {
+const ArtistList = ({ artists, loading, onEdit, onDelete, onView }) => {
     if (loading) {
         return (
             <div className="w-full h-64 flex items-center justify-center">
@@ -11,7 +11,7 @@ const ArtistList = ({ artists, loading, onEdit, onDelete }) => {
     }
 
     // Helper for formatting ID like #VA-001
-    const formatId = (id) => `${String(id).padStart(3, '')}`;
+    const formatId = (id) => `${String(id).padStart(3, '0')}`;
 
     const roleMap = {
         'actor': 'Diễn viên',
@@ -30,9 +30,10 @@ const ArtistList = ({ artists, loading, onEdit, onDelete }) => {
     };
 
     return (
-        <div className="w-full bg-white rounded-xl overflow-hidden border border-gray-100 shadow-sm">
-            {/* Table Header */}
-            <div className="grid grid-cols-[80px_minmax(250px,2fr)_150px_3fr_120px] gap-4 px-8 py-4 bg-white border-b border-gray-50">
+        <div className="w-full bg-white rounded-xl overflow-x-auto border border-gray-100 shadow-sm custom-scrollbar">
+            <div className="min-w-[900px]">
+                {/* Table Header */}
+                <div className="grid grid-cols-[80px_minmax(250px,2fr)_150px_3fr_120px] gap-4 px-8 py-4 bg-white border-b border-gray-50">
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">ID</div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">THÔNG TIN NGHỆ SĨ</div>
                 <div className="text-[10px] font-bold text-gray-400 uppercase tracking-[0.2em]">VAI TRÒ</div>
@@ -85,6 +86,7 @@ const ArtistList = ({ artists, loading, onEdit, onDelete }) => {
                             {/* Actions Column */}
                             <div className="flex items-center justify-end gap-2 px-1">
                                 <button 
+                                    onClick={() => onView(artist)}
                                     className="p-2 text-red-900/60 hover:text-red-900 hover:bg-red-50 rounded-lg transition-all"
                                     title="Xem"
                                 >
@@ -110,11 +112,13 @@ const ArtistList = ({ artists, loading, onEdit, onDelete }) => {
                 })}
             </div>
 
+
             {artists.length === 0 && (
                 <div className="py-24 text-center">
                     <p className="text-gray-400 font-serif italic text-lg leading-relaxed">Hiện tại chưa có dữ liệu nghệ sĩ để hiển thị.</p>
                 </div>
             )}
+            </div>
         </div>
     );
 };

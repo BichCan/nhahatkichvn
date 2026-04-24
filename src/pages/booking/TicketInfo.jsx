@@ -253,7 +253,7 @@ function OrderCard({ orderCode, items, onCancel }) {
               <div className="text-xs font-bold text-gray-400 uppercase tracking-widest mb-1">Mã đơn hàng</div>
               <div className="text-xl font-mono font-bold text-[#5a1a1a]">{orderCode}</div>
             </div>
-            {isPending && timeLeft.seconds !== undefined && (
+            {isPending && firstItem.status === "holding" && timeLeft.seconds !== undefined && (
               <div className="text-right">
                 <div className="text-xs font-bold text-amber-600 uppercase tracking-widest mb-1">Hết hạn trong</div>
                 <div className="text-xl font-mono font-black text-amber-600">

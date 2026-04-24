@@ -4,7 +4,7 @@ export default function ArticleContent({ content }) {
     const renderContent = (block, index) => {
         switch (block.type) {
             case 'paragraph':
-                return <p key={index} className="mb-6 text-lg text-slate-900 dark:text-slate-900 leading-relaxed">{block.text}</p>;
+                return <p key={index} className="mb-6 text-lg text-slate-900 dark:text-slate-900 leading-relaxed whitespace-pre-wrap">{block.text}</p>;
             
             case 'heading':
                 const HeadingTag = `h${block.level}`;

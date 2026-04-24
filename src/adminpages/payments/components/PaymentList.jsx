@@ -49,118 +49,110 @@ const PaymentList = ({ payments, loading, onConfirm, onReject, onDelete, onView 
     };
 
     return (
-        <div className="w-full bg-white rounded-xl overflow-x-auto border border-gray-100 shadow-sm">
+        <div className="w-full bg-white rounded-xl overflow-hidden">
             {/* Table Header */}
-            <div className="grid grid-cols-[80px_180px_minmax(160px,1fr)_100px_120px_100px_120px] gap-3 px-5 py-3 bg-gray-50/80 border-b border-gray-100 min-w-[900px]">
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Mã Đơn</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Khách Hàng</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Vở Diễn</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest">Tổng Tiền</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">Thanh Toán</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-center">TT</div>
-                <div className="text-[9px] font-black text-gray-400 uppercase tracking-widest text-right">Thao Tác</div>
+            <div className="flex items-center gap-1 px-4 py-3 bg-gray-50/80 border-b border-gray-100">
+                <div className="w-[10%] text-[8px] font-black text-gray-400 uppercase tracking-widest">Mã Đơn</div>
+                <div className="w-[20%] text-[8px] font-black text-gray-400 uppercase tracking-widest">Khách Hàng</div>
+                <div className="w-[25%] text-[8px] font-black text-gray-400 uppercase tracking-widest">Vở Diễn</div>
+                <div className="w-[12%] text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">Tổng Tiền</div>
+                <div className="w-[10%] text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">P.Thức</div>
+                <div className="w-[8%] text-[8px] font-black text-gray-400 uppercase tracking-widest text-center">TT</div>
+                <div className="w-[15%] text-[8px] font-black text-gray-400 uppercase tracking-widest text-right">Thao Tác</div>
             </div>
 
             {/* Table Body */}
-            <div className="divide-y divide-gray-50 min-w-[900px]">
+            <div className="divide-y divide-gray-50">
                 {payments.map((payment) => {
                     const statusStyle = getStatusStyles(payment.payment_status);
                     const isPending = payment.payment_status?.toLowerCase() === 'pending';
                     const isPaid = payment.payment_status?.toLowerCase() === 'paid';
+                    const isExpired = !isPaid && payment.created_at && (new Date() > new Date(new Date(payment.created_at).getTime() + 24 * 60 * 60 * 1000));
 
                     return (
-                        <div key={payment.order_id} className="grid grid-cols-[80px_180px_minmax(160px,1fr)_100px_120px_100px_120px] gap-3 px-5 py-3.5 items-center hover:bg-gray-50/50 transition-all group">
+                        <div key={payment.order_id} className="flex items-center gap-1 px-4 py-3 hover:bg-gray-50/50 transition-all group">
                             {/* Order ID */}
-                            <div className="flex flex-col">
-                                <span className="text-[8px] font-bold text-gray-300 uppercase tracking-tighter">#ORD</span>
-                                <span className="text-xs font-black text-gray-800 tracking-tight leading-tight">
-                                    {payment.order_id.split('-').slice(-2).join('-')}
+                            <div className="w-[10%] flex flex-col">
+                                <span className="text-[10px] font-black text-gray-800 tracking-tighter truncate">
+                                    {payment.order_id.split('-').slice(-1)[0]}
                                 </span>
                             </div>
 
                             {/* Customer Info */}
-                            <div className="flex items-center gap-2">
-                                <div className="w-7 h-7 rounded-lg bg-gray-50 border border-gray-100 flex items-center justify-center text-gray-400 flex-shrink-0">
-                                    <FaUser size={10} />
-                                </div>
-                                <div className="flex flex-col min-w-0">
-                                    <span className="text-xs font-bold text-gray-900 truncate leading-tight">{payment.customer_name}</span>
-                                    <span className="text-[10px] text-gray-400">{payment.customer_phone}</span>
-                                </div>
+                            <div className="w-[20%] flex flex-col min-w-0">
+                                <span className="text-[11px] font-bold text-gray-900 truncate leading-tight">
+                                    {payment.customer_name || `User #${payment.user_id}`}
+                                </span>
+                                <span className="text-[9px] text-gray-400 truncate">{payment.customer_phone}</span>
                             </div>
 
                             {/* Performance Info */}
-                            <div className="flex flex-col gap-0.5 min-w-0">
-                                <span className="text-xs font-semibold text-gray-800 truncate leading-tight">
-                                    {payment.performance_title || 'N/A'}
+                            <div className="w-[25%] flex flex-col min-w-0">
+                                <span className="text-[11px] font-semibold text-gray-700 truncate leading-tight">
+                                    {payment.performance_title || payment.note || 'N/A'}
                                 </span>
-                                {payment.showtime && (
-                                    <span className="text-[10px] text-gray-400 flex items-center gap-1">
-                                        <FaClock size={8} className="text-[#700c1e]/30" />
-                                        {formatTime(payment.showtime)} · {formatDate(payment.showtime)}
+                                {payment.performance_title && payment.note && (
+                                    <span className="text-[9px] text-gray-400 truncate italic">
+                                        {payment.note}
                                     </span>
                                 )}
                             </div>
 
                             {/* Total Amount */}
-                            <div className="text-sm font-black text-gray-900 tracking-tight">
+                            <div className="w-[12%] text-[11px] font-black text-gray-900 text-center">
                                 {formatCurrency(payment.total_amount)}
                             </div>
 
                             {/* Payment Method */}
-                            <div className="flex flex-col items-center gap-1 text-center">
-                                <span className="text-[10px] font-semibold text-gray-500 leading-tight">
-                                    {payment.payment_method === 'cash' ? 'Tiền mặt' : payment.payment_method}
+                            <div className="w-[10%] text-center">
+                                <span className="text-[9px] font-medium text-gray-500 bg-gray-50 px-1.5 py-0.5 rounded border border-gray-100">
+                                    {payment.payment_method === 'cash' ? 'Tiền mặt' : 'Online'}
                                 </span>
                             </div>
 
                             {/* Status */}
-                            <div className="flex justify-center">
-                                <div className={`inline-flex items-center gap-1.5 px-2 py-1 rounded-full ${statusStyle.bg}`}>
-                                    <span className={`w-1 h-1 rounded-full flex-shrink-0 ${statusStyle.dot}`}></span>
-                                    <span className={`text-[9px] font-black tracking-wide ${statusStyle.text}`}>
-                                        {statusStyle.label}
+                            <div className="w-[8%] flex justify-center">
+                                <div className={`inline-flex items-center gap-1 px-1.5 py-0.5 rounded-full ${isExpired ? 'bg-gray-50' : statusStyle.bg}`}>
+                                    <span className={`w-1 h-1 rounded-full ${isExpired ? 'bg-gray-400' : statusStyle.dot}`}></span>
+                                    <span className={`text-[8px] font-black tracking-tighter ${isExpired ? 'text-gray-500' : statusStyle.text}`}>
+                                        {isExpired ? 'EXPIRED' : statusStyle.label}
                                     </span>
                                 </div>
                             </div>
 
                             {/* Actions */}
-                            <div className="flex items-center justify-end gap-1">
-                                {isPending ? (
-                                    <div className="flex items-center gap-1">
+                            <div className="w-[15%] flex items-center justify-end gap-0.5">
+                                <button
+                                    onClick={() => onView(payment)}
+                                    className="p-1.5 text-gray-400 hover:text-blue-600 hover:bg-blue-50 rounded-lg transition-all"
+                                    title="Xem chi tiết"
+                                >
+                                    <FaEye size={11} />
+                                </button>
+                                <button
+                                    onClick={() => onDelete(payment.order_id)}
+                                    className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
+                                    title="Xóa đơn hàng"
+                                >
+                                    <FaTrash size={11} />
+                                </button>
+
+                                {isPending && !isExpired && (
+                                    <div className="flex items-center gap-0.5 border-l border-gray-100 ml-0.5 pl-0.5">
                                         <button
                                             onClick={() => onReject(payment)}
-                                            className="flex items-center gap-1 px-2 py-1.5 border border-gray-200 bg-white text-gray-500 hover:text-red-600 hover:border-red-200 hover:bg-red-50 rounded-lg text-[10px] font-black uppercase transition-all"
-                                            title="Từ chối"
+                                            className="p-1 text-amber-600 hover:bg-amber-50 rounded transition-all"
+                                            title="Hủy đơn"
                                         >
-                                            <FaTimesCircle size={10} /> Hủy
+                                            <FaTimesCircle size={11} />
                                         </button>
                                         <button
                                             onClick={() => onConfirm(payment)}
-                                            className="flex items-center gap-1 px-2 py-1.5 bg-[#700c1e] text-white rounded-lg text-[10px] font-black uppercase shadow-sm hover:scale-105 active:scale-95 transition-all"
-                                            title="Xác nhận thanh toán whitespace-nowrap"
+                                            className="p-1 text-emerald-600 hover:bg-emerald-50 rounded transition-all"
+                                            title="Xác nhận"
                                         >
-                                            <FaCheckCircle size={10} /> Xác nhận
+                                            <FaCheckCircle size={11} />
                                         </button>
-                                    </div>
-                                ) : (
-                                    <div className="flex items-center gap-1">
-                                        <button
-                                            onClick={() => onView(payment)}
-                                            className="p-1.5 text-gray-400 hover:text-[#700c1e] hover:bg-red-50 rounded-lg transition-all"
-                                            title="Xem chi tiết"
-                                        >
-                                            <FaEye size={13} />
-                                        </button>
-                                        {!isPaid && (
-                                            <button
-                                                onClick={() => onDelete(payment.order_id)}
-                                                className="p-1.5 text-gray-400 hover:text-red-600 hover:bg-red-50 rounded-lg transition-all"
-                                                title="Xóa đơn hàng"
-                                            >
-                                                <FaTrash size={13} />
-                                            </button>
-                                        )}
                                     </div>
                                 )}
                             </div>

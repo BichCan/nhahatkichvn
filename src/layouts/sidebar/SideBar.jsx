@@ -15,10 +15,10 @@ const SideBar = () => {
 
     const menuItems = [
         { id: 'dashboard', label: 'Bảng điều khiển', icon: <FaChartPie />, path: '/admin/dashboard' },
-        { id: 'plays', label: 'Vở diễn', icon: <FaTheaterMasks />, path: '/admin/plays' },
+        { id: 'performances', label: 'Vở diễn', icon: <FaTheaterMasks />, path: '/admin/performances' },
         { id: 'artists', label: 'Nghệ sĩ', icon: <FaUsers />, path: '/admin/artists' },
         { id: 'news', label: 'Tin tức', icon: <FaNewspaper />, path: '/admin/news' },
-        { id: 'payments', label: 'Quản lý thanh toán', icon: <FaTicketAlt />, path: '/admin/payments' },
+        { id: 'payments', label: 'Quản lý Đặt vé', icon: <FaTicketAlt />, path: '/admin/payments' },
     ];
 
     const isActive = (path) => location.pathname.startsWith(path);

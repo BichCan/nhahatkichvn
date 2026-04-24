@@ -899,7 +899,8 @@ def get_artists():
             "name": r["name"],
             "avatar": r["avatar_url"],
             "bio": r["bio"],
-            "role_type": r["role_type"]
+            "role_type": r["role_type"],
+            "status": r["status"]
         }
         artists.append(artist)
         

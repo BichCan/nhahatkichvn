@@ -1,42 +1,38 @@
 import React, { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { FaPlus, FaSearch, FaFilter, FaUsers } from 'react-icons/fa';
-import ArtistList from './components/ArtistList';
-import AddArtistModal from './components/AddArtistModal';
-import ArtistDetailModal from './components/ArtistDetailModal';
+import { FaPlus, FaSearch, FaFilter, FaTheaterMasks } from 'react-icons/fa';
+import PerformanceList from './components/PerformanceList';
 import API_URL from '../../config/api';
 
-const ArtistManagement = () => {
+const PerformanceManagement = () => {
     const navigate = useNavigate();
-    const [artists, setArtists] = useState([]);
+    const [performances, setPerformances] = useState([]);
     const [loading, setLoading] = useState(true);
-    const [isModalOpen, setIsModalOpen] = useState(false);
-    const [isDetailModalOpen, setIsDetailModalOpen] = useState(false);
-    const [selectedArtist, setSelectedArtist] = useState(null);
-    const [artistForDetail, setArtistForDetail] = useState(null);
     const [searchTerm, setSearchTerm] = useState('');
 
-    const fetchArtists = async () => {
+    const fetchPerformances = async () => {
         setLoading(true);
         try {
-            const response = await fetch(`${API_URL}/api/artists`, {
+            const response = await fetch(`${API_URL}/api/admin/performances`, {
                 credentials: 'include'
             });
             const data = await response.json();
-            setArtists(data);
+            if (data.success) {
+                setPerformances(data.performances);
+            }
         } catch (error) {
-            console.error('Error fetching artists:', error);
+            console.error('Error fetching performances:', error);
         } finally {
             setLoading(false);
         }
     };
 
     useEffect(() => {
-        fetchArtists();
+        fetchPerformances();
     }, []);
 
-    const handleDeleteArtist = async (id) => {
-        if (!window.confirm('Bạn có chắc chắn muốn xóa nghệ sĩ này?')) return;
+    const handleDeletePerformance = async (id) => {
+        if (!window.confirm('Bạn có chắc chắn muốn xóa vở diễn này? Tất cả suất diễn liên quan cũng sẽ bị xóa.')) return;
         
         const userStr = localStorage.getItem('user');
         let admin_id = '1';
@@ -45,42 +41,33 @@ const ArtistManagement = () => {
         }
         
         try {
-            const response = await fetch(`${API_URL}/api/admin/artists/${id}`, {
+            const response = await fetch(`${API_URL}/api/admin/performances/${id}?admin_id=${admin_id}`, {
                 method: 'DELETE',
-                headers: {
-                    'X-Admin-ID': admin_id
-                },
                 credentials: 'include'
             });
             const data = await response.json();
             if (data.success) {
-                fetchArtists();
+                fetchPerformances();
             } else {
                 alert(data.message);
             }
         } catch (error) {
-            console.error('Error deleting artist:', error);
-            alert('Lỗi khi xóa nghệ sĩ.');
+            console.error('Error deleting performance:', error);
+            alert('Lỗi khi xóa vở diễn.');
         }
     };
 
-    const handleEditArtist = (artist) => {
-        navigate(`/admin/artists/update/${artist.id}`);
-    };
-
-    const handleViewArtist = (artist) => {
-        setArtistForDetail(artist);
-        setIsDetailModalOpen(true);
+    const handleEditPerformance = (perf) => {
+        navigate(`/admin/performances/update/${perf.id}`);
     };
 
     const handleAddNew = () => {
-        setSelectedArtist(null);
-        setIsModalOpen(true);
+        navigate('/admin/performances/create');
     };
 
-    const filteredArtists = artists.filter(item => 
-        item.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (item.role_type && item.role_type.toLowerCase().includes(searchTerm.toLowerCase()))
+    const filteredPerformances = performances.filter(item => 
+        item.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        (item.type && item.type.toLowerCase().includes(searchTerm.toLowerCase()))
     );
 
     return (
@@ -88,19 +75,19 @@ const ArtistManagement = () => {
             {/* Header Section */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 mb-10">
                 <div>
-                    <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-3">QUẢN LÝ NGHỆ SĨ</h1>
+                    <h1 className="text-3xl font-black text-gray-900 tracking-tight leading-none mb-3">QUẢN LÝ VỞ DIỄN</h1>
                     <div className="flex items-center gap-2 text-gray-600 text-sm font-medium">
-                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-md border border-gray-200 text-red-600 font-bold">
-                            <FaUsers /> {artists.length} NGHỆ SĨ
+                        <span className="flex items-center gap-1.5 px-2 py-0.5 bg-gray-100 rounded-lg border border-gray-200 text-red-600 font-bold">
+                            <FaTheaterMasks /> {performances.length} VỞ DIỄN
                         </span>
-                        <span>Duy trì và phát triển đội ngũ nòng cốt của Nhà hát kịch Việt Nam.</span>
+                        <span>Quản lý danh sách các vở diễn và lịch trình biểu diễn của Nhà hát.</span>
                     </div>
                 </div>
                 <button 
                     onClick={handleAddNew}
                     className="flex items-center justify-center gap-2 px-8 py-4 bg-red-600 hover:bg-red-700 text-white font-bold rounded-xl transition-all duration-300 shadow-lg shadow-red-600/20 active:scale-95 whitespace-nowrap"
                 >
-                    <FaPlus /> Thêm nghệ sĩ mới
+                    <FaPlus /> Thêm vở diễn mới
                 </button>
             </div>
 
@@ -110,48 +97,33 @@ const ArtistManagement = () => {
                     <FaSearch className="absolute left-4 top-1/2 -translate-y-1/2 text-gray-400 group-focus-within:text-red-500 transition-colors" />
                     <input 
                         type="text" 
-                        placeholder="Tìm kiếm theo tên nghệ sĩ hoặc vai trò..." 
+                        placeholder="Tìm kiếm theo tên vở diễn, thể loại..." 
                         value={searchTerm}
                         onChange={(e) => setSearchTerm(e.target.value)}
                         className="w-full bg-white border border-gray-200 rounded-xl pl-12 pr-4 py-3.5 text-gray-900 focus:outline-none focus:border-red-600/50 shadow-sm focus:shadow-md transition-all placeholder:text-gray-400"
                     />
                 </div>
                 <button className="px-6 py-3.5 bg-white border border-gray-200 rounded-xl text-gray-900 font-bold flex items-center justify-center gap-2 hover:bg-gray-50 transition-all shadow-sm">
-                    <FaFilter /> Phân loại
+                    <FaFilter /> Bộ lọc
                 </button>
             </div>
 
             {/* Content Section */}
-            <ArtistList 
-                artists={filteredArtists} 
+            <PerformanceList 
+                performances={filteredPerformances} 
                 loading={loading} 
-                onEdit={handleEditArtist}
-                onDelete={handleDeleteArtist}
-                onView={handleViewArtist}
+                onEdit={handleEditPerformance}
+                onDelete={handleDeletePerformance}
             />
 
-            {/* Footer Attribution (Matched with design screenshot) */}
+            {/* Footer Attribution */}
             <div className="mt-16 pt-8 border-t border-white/5 flex items-center justify-center text-center">
                 <p className="text-[10px] font-bold text-gray-600 uppercase tracking-[0.3em]">
                     VELVET ARCHIVE © 2024 • THEATER CURATION SYSTEM
                 </p>
             </div>
-
-            {/* Modals */}
-            <AddArtistModal 
-                isOpen={isModalOpen} 
-                onClose={() => setIsModalOpen(false)} 
-                onRefresh={fetchArtists}
-                artistData={selectedArtist}
-            />
-
-            <ArtistDetailModal 
-                isOpen={isDetailModalOpen}
-                onClose={() => setIsDetailModalOpen(false)}
-                artist={artistForDetail}
-            />
         </div>
     );
 };
 
-export default ArtistManagement;
+export default PerformanceManagement;
